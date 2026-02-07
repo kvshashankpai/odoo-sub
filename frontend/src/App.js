@@ -65,7 +65,7 @@ export default function App() {
           </Route>
 
           {/* Portal Routes */}
-          <Route path="/portal" element={<ProtectedRoute allowedRoles={['portal']}><Layout type="portal" /></ProtectedRoute>}>
+          <Route path="/portal" element={<ProtectedRoute allowedRoles={['customer', 'portal']}><Layout type="portal" /></ProtectedRoute>}>
             <Route index element={<PortalHome />} />
             <Route path="shop" element={<Shop />} />
             <Route path="cart" element={<Cart />} />

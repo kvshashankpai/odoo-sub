@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, User, ArrowRight, AlertCircle } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { signupUser } from '../api'; // Import API
 
 export default function Signup() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -11,15 +14,15 @@ export default function Signup() {
     confirmPassword: ''
   });
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false); // Added loading state
 
   // Strict Password Validation [Requirement 5.4]
   const validatePassword = (pass) => {
-    // Regex: At least 8 chars, 1 uppercase, 1 lowercase, 1 special char
     const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*])(?=.{8,})/;
     return regex.test(pass);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
@@ -35,10 +38,30 @@ export default function Signup() {
       return;
     }
 
-    // 3. Simulate API Call
-    console.log("Creating user...", formData);
-    alert("Account created successfully! Please login.");
-    navigate('/login');
+    setLoading(true);
+
+    try {
+      // 3. Real API Call
+      const response = await signupUser({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password
+      });
+
+      // Auto-login on success
+      const { token, user } = response.data;
+      login(user);
+      localStorage.setItem('token', token);
+
+      alert("Account created successfully!");
+      // Redirect to portal for new customers
+      navigate('/portal');
+
+    } catch (err) {
+      setError(err.response?.data?.error || "Signup failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -120,9 +143,10 @@ export default function Signup() {
 
           <button 
             type="submit" 
-            className="w-full bg-primary text-white py-2.5 rounded-lg hover:bg-opacity-90 transition font-medium flex items-center justify-center gap-2"
+            disabled={loading}
+            className="w-full bg-primary text-white py-2.5 rounded-lg hover:bg-opacity-90 transition font-medium flex items-center justify-center gap-2 disabled:opacity-50"
           >
-            Sign Up <ArrowRight size={18} />
+            {loading ? 'Creating Account...' : 'Sign Up'} <ArrowRight size={18} />
           </button>
         </form>
 

@@ -1,21 +1,52 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { loginUser } from '../api'; // Import API
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { login } = useAuth();
+  const [error, setError] = useState(''); // Added error state
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    login(email, password);
-    // Redirect based on simulated role (logic inside AuthContext)
-    if (email.includes('admin') || email.includes('internal')) {
-      navigate('/app');
-    } else {
-      navigate('/portal');
+    setError('');
+    setLoading(true);
+
+    try {
+      // 1. Call Backend
+      const response = await loginUser({ email, password });
+      
+      const { token, user } = response.data;
+
+      console.log('Login response:', response.data);
+      console.log('User role:', user.role);
+
+      // 2. Save Token and User to Context
+      login(user);
+      localStorage.setItem('token', token);
+
+      // 3. Redirect based on Role (from DB)
+      console.log('Checking role:', user.role);
+      if (user.role === 'admin' || user.role === 'internal') {
+        console.log('Redirecting to admin dashboard');
+        navigate('/app'); // Admin Dashboard
+      } else if (user.role === 'customer' || user.role === 'portal') {
+        console.log('Redirecting to portal');
+        navigate('/portal'); // Customer Portal
+      } else {
+        console.log('Unknown role, redirecting to login');
+        navigate('/login'); // Unknown role, redirect to login
+      }
+
+    } catch (err) {
+      setError(err.response?.data?.error || 'Invalid email or password');
+      console.error('Login error:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -25,6 +56,13 @@ export default function Login() {
         <h1 className="text-3xl font-bold text-primary mb-2 text-center">Odoo</h1>
         <p className="text-gray-500 text-center mb-8">Subscription Management</p>
         
+        {/* Error Message UI Added */}
+        {error && (
+            <div className="bg-red-50 text-red-600 p-2 text-sm rounded mb-4 text-center">
+                {error}
+            </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
@@ -48,8 +86,12 @@ export default function Login() {
               required 
             />
           </div>
-          <button type="submit" className="w-full bg-primary text-white py-2 rounded hover:bg-opacity-90 transition">
-            Login
+          <button 
+            type="submit" 
+            disabled={loading}
+            className="w-full bg-primary text-white py-2 rounded hover:bg-opacity-90 transition disabled:opacity-50"
+          >
+            {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
         

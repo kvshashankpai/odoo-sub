@@ -1,81 +1,72 @@
 const db = require('../db');
 
-// Get all subscriptions
 exports.getSubscriptions = async (req, res) => {
-  try {
-    // Join with users to get customer name
-    const query = `
-      SELECT s.*, u.name as customer_name 
-      FROM subscriptions s 
-      JOIN users u ON s.user_id = u.id 
-      ORDER BY s.created_at DESC
-    `;
-    const result = await db.query(query);
-    res.json(result.rows);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+    try {
+        const query = `
+            SELECT s.*, u.name as customer_name, p.plan_name 
+            FROM subscriptions s
+            JOIN users u ON s.customer_id = u.id
+            JOIN recurring_plans p ON s.plan_id = p.id
+            ORDER BY s.created_at DESC
+        `;
+        const result = await db.query(query);
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 };
 
-// Create Subscription (Draft)
 exports.createSubscription = async (req, res) => {
-  const { user_id, lines } = req.body; // lines = [{ product_id, quantity, unit_price }]
-  
-  try {
-    await db.query('BEGIN'); // Start Transaction
-
-    // 1. Create Subscription Header
-    const subCode = `SUB/${new Date().getFullYear()}/${Date.now()}`;
-    const subRes = await db.query(
-      `INSERT INTO subscriptions (code, user_id, status) VALUES ($1, $2, 'Draft') RETURNING id`,
-      [subCode, user_id]
-    );
-    const subId = subRes.rows[0].id;
+    // Added total_amount to body so we can save it for invoicing later
+    const { customer_id, plan_id, start_date, total_amount } = req.body;
     
-    let total = 0;
+    const subNumber = `SUB-${Date.now()}`; 
 
-    // 2. Insert Lines & Calculate Total
-    for (const line of lines) {
-      const subtotal = line.quantity * line.unit_price;
-      total += subtotal;
-      await db.query(
-        `INSERT INTO subscription_lines (subscription_id, product_id, quantity, unit_price, subtotal)
-         VALUES ($1, $2, $3, $4, $5)`,
-        [subId, line.product_id, line.quantity, line.unit_price, subtotal]
-      );
+    try {
+        const result = await db.query(
+            'INSERT INTO subscriptions (subscription_number, customer_id, plan_id, start_date, total_amount, status) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+            [subNumber, customer_id, plan_id, start_date, total_amount || 0, 'draft'] // Default to 'draft'
+        );
+        res.status(201).json(result.rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
-
-    // 3. Update Total Amount
-    await db.query('UPDATE subscriptions SET total_amount = $1 WHERE id = $2', [total, subId]);
-
-    await db.query('COMMIT'); // Commit Transaction
-    res.status(201).json({ message: 'Subscription created', id: subId, code: subCode });
-  } catch (err) {
-    await db.query('ROLLBACK');
-    res.status(500).json({ error: err.message });
-  }
 };
 
-// Update Status (Draft -> Active -> Closed)
 exports.updateStatus = async (req, res) => {
-  const { id } = req.params;
-  const { status } = req.body; // 'Active' or 'Closed'
+    const { id } = req.params;
+    const { action } = req.body; // Expecting: 'send_quotation', 'confirm', 'cancel'
 
-  try {
-    let query = 'UPDATE subscriptions SET status = $1 WHERE id = $2 RETURNING *';
-    let params = [status, id];
+    try {
+        let newStatus;
+        
+        // State Machine Logic
+        switch (action) {
+            case 'send_quotation':
+                newStatus = 'quotation_sent';
+                break;
+            case 'confirm':
+                newStatus = 'confirmed';
+                break;
+            case 'cancel':
+                newStatus = 'cancelled';
+                break;
+            default:
+                // Fallback if raw status string is sent
+                newStatus = req.body.status;
+        }
 
-    // If Activating, set start date and next invoice
-    if (status === 'Active') {
-      const today = new Date();
-      const nextMonth = new Date(today.setMonth(today.getMonth() + 1));
-      query = `UPDATE subscriptions SET status = $1, start_date = NOW(), next_invoice_date = $2 WHERE id = $3 RETURNING *`;
-      params = [status, nextMonth, id];
+        if (!newStatus) {
+            return res.status(400).json({ error: "Invalid action or status" });
+        }
+
+        const result = await db.query(
+            'UPDATE subscriptions SET status = $1, updated_at = NOW() WHERE id = $2 RETURNING *',
+            [newStatus, id]
+        );
+        
+        res.json(result.rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
-
-    const result = await db.query(query, params);
-    res.json(result.rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
 };

@@ -111,6 +111,11 @@ export default function Layout({ type = 'admin' }) {
                 <ShoppingCart size={18} />
                 <span className="hidden sm:inline">Cart</span>
               </Link>
+              {user?.role === 'admin' || user?.role === 'internal' ? (
+                <Link to="/app" className="px-3 py-2 rounded text-sm font-semibold text-primary hover:bg-primary/10">
+                  Admin
+                </Link>
+              ) : null}
               <div className="hidden sm:flex items-center gap-3">
                 <div className="text-sm text-gray-700">{user?.name}</div>
                 <button onClick={handleLogout} className="text-sm text-red-600 hover:text-red-800">Sign Out</button>

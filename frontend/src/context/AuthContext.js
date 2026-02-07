@@ -5,27 +5,28 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
 
-  // --- DEVELOPER MODE: AUTO-LOGIN ---
+  // --- RESTORE USER FROM LOCALSTORAGE ON APP LOAD ---
   useEffect(() => {
-    // Uncomment this to force login as Admin immediately
-    // setUser({ name: 'Mitchell Admin', email: 'admin@odoo.com', role: 'admin' }); 
-    
-    // If you want to test Portal view later, comment the line above and uncomment this:
-    setUser({ name: 'Client User', email: 'client@gmail.com', role: 'portal' });
-  }, []);
-  // ----------------------------------
-
-  const login = (email, password) => {
-    if (email.includes('admin')) {
-      setUser({ name: 'Mitchell Admin', email, role: 'admin' });
-    } else if (email.includes('internal')) {
-      setUser({ name: 'Internal User', email, role: 'internal' });
-    } else {
-      setUser({ name: 'Portal User', email, role: 'portal' });
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (err) {
+        console.error('Error parsing stored user:', err);
+      }
     }
+  }, []);
+
+  const login = (userData) => {
+    setUser(userData);
+    localStorage.setItem('user', JSON.stringify(userData));
   };
 
-  const logout = () => setUser(null);
+  const logout = () => {
+    setUser(null);
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+  };
 
   return (
     <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user }}>
