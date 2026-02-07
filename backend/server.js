@@ -8,7 +8,7 @@ const db = require('./db'); // ✅ Correct path (same folder)
 const authRoutes = require('./routes/authRoutes');
 const subscriptionRoutes = require('./routes/subscriptionRoutes');
 const invoiceRoutes = require('./routes/invoiceRoutes');
-// const productRoutes = require('./routes/productRoutes'); // Uncomment when you create this
+const productRoutes = require('./routes/productRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -26,7 +26,7 @@ app.get('/', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/invoices', invoiceRoutes);
-// app.use('/api/products', productRoutes);
+app.use('/api/products', productRoutes);
 
 // --- ERROR HANDLING ---
 app.use((err, req, res, next) => {

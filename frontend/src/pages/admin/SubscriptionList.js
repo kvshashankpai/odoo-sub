@@ -1,94 +1,93 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Plus, Search } from 'lucide-react';
-import { useData } from '../../context/DataContext';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { useNavigate, Outlet } from 'react-router-dom';
 
-export default function SubscriptionList() {
-  const navigate = useNavigate();
-  const { subscriptions, deleteSubscription } = useData();
+const SubscriptionList = () => {
+  const [subscriptions, setSubscriptions] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchSubscriptions();
+  }, []);
+
+  const fetchSubscriptions = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/api/subscriptions');
+      setSubscriptions(response.data);
+    } catch (error) {
+      console.error('Error fetching subscriptions:', error);
+    }
+  };
+
+  const filtered = subscriptions.filter(sub =>
+    sub.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    sub.subscription_number?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
-      <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+    <div className="p-6 bg-gray-50 min-h-screen">
+      <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Subscriptions</h1>
-        <div className="flex gap-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-            <input 
-              placeholder="Search..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 w-64"
-            />
-          </div>
-          <button 
-            onClick={() => navigate('/app/subscriptions/new')}
-            className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transition shadow-sm"
-          >
-            <Plus size={18} /> New Subscription
-          </button>
-        </div>
+        <button
+          onClick={() => navigate('/app/subscriptions/new')}
+          className="bg-purple-600 text-white px-4 py-2 rounded shadow hover:bg-purple-700 transition"
+        >
+          Create New
+        </button>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
-        <table className="w-full text-left">
-          <thead className="bg-gray-50 border-b text-sm text-gray-600">
-            <tr>
-              <th className="px-6 py-4">Reference</th>
-              <th className="px-6 py-4">Customer</th>
-              <th className="px-6 py-4">Plan</th>
-              <th className="px-6 py-4">Amount</th>
-              <th className="px-6 py-4">Start Date</th>
-              <th className="px-6 py-4 text-center">Status</th>
-              <th className="px-6 py-4">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {subscriptions
-              .filter(s => s.customer.toLowerCase().includes(searchTerm.toLowerCase()) || s.id.toLowerCase().includes(searchTerm.toLowerCase()))
-              .map((s) => (
-              <tr 
-                key={s.id} 
-                className="hover:bg-gray-50 transition"
-              >
-                <td className="px-6 py-4 font-bold text-primary cursor-pointer hover:underline" onClick={() => navigate(`/app/subscriptions/${s.id}`)}>{s.id}</td>
-                <td className="px-6 py-4 font-medium">{s.customer}</td>
-                <td className="px-6 py-4 text-gray-600">{s.planId}</td>
-                <td className="px-6 py-4 font-medium">${s.amount.toFixed(2)}</td>
-                <td className="px-6 py-4 text-gray-600">{s.startDate}</td>
-                <td className="px-6 py-4 text-center">
-                  <span className={`px-2 py-1 rounded-full text-xs font-bold uppercase
-                    ${s.status === 'Active' ? 'bg-green-100 text-green-700' : 
-                      s.status === 'Quotation' ? 'bg-blue-100 text-blue-700' :
-                      s.status === 'Confirmed' ? 'bg-purple-100 text-purple-700' :
-                      s.status === 'Draft' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-200 text-gray-600'}`}>
-                    {s.status}
-                  </span>
-                </td>
-                <td className="px-6 py-4 flex gap-2">
-                  <button 
-                    onClick={() => navigate(`/app/subscriptions/${s.id}`)}
-                    className="text-primary hover:underline text-sm font-medium"
-                  >
-                    Edit
-                  </button>
-                  <button 
-                    onClick={() => {
-                      if (window.confirm('Delete this subscription?')) {
-                        deleteSubscription(s.id);
-                      }
-                    }}
-                    className="text-red-600 hover:underline text-sm font-medium"
-                  >
-                    Delete
-                  </button>
-                </td>
+      <div className="mb-4">
+        <input
+          type="text"
+          placeholder="Search customer or subscription #..."
+          className="w-full p-2 border rounded shadow-sm focus:ring-2 focus:ring-purple-500 outline-none"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
+
+      {/* Two-column layout: list on left, nested route (form/detail) on right */}
+      <div className="grid grid-cols-12 gap-6">
+        {/* Left: list (7/12) */}
+        <div className="col-span-7 bg-white rounded-lg shadow overflow-hidden">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-100">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">Number</th>
+                <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">Customer</th>
+                <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">Plan</th>
+                <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">Next Invoice</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {filtered.map((sub) => (
+                <tr key={sub.id} onClick={() => navigate(`/app/subscriptions/${sub.id}`)} className="hover:bg-gray-50 cursor-pointer transition">
+                  <td className="px-6 py-4 text-sm font-medium text-purple-600">{sub.subscription_number || `SUB/00${sub.id}`}</td>
+                  <td className="px-6 py-4 text-sm text-gray-700">{sub.customer_name}</td>
+                  <td className="px-6 py-4 text-sm text-gray-700">{sub.plan_name}</td>
+                  <td className="px-6 py-4">
+                    <span className={`px-2 py-1 text-xs font-bold rounded-full ${sub.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                      {sub.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-500">{sub.next_invoice_date || 'N/A'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Right: nested route content (form / detail) (5/12) */}
+        <div className="col-span-5">
+          <div className="bg-white rounded-lg shadow p-6 min-h-[400px]">
+            <Outlet />
+          </div>
+        </div>
       </div>
     </div>
   );
-}
+};
+
+export default SubscriptionList;

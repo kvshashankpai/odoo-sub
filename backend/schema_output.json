@@ -1,0 +1,42 @@
+[
+  {
+    "column_name": "created_at",
+    "data_type": "timestamp without time zone",
+    "is_nullable": "YES"
+  },
+  {
+    "column_name": "next_billing_date",
+    "data_type": "timestamp without time zone",
+    "is_nullable": "YES"
+  },
+  {
+    "column_name": "total_amount",
+    "data_type": "numeric",
+    "is_nullable": "YES"
+  },
+  {
+    "column_name": "id",
+    "data_type": "integer",
+    "is_nullable": "NO"
+  },
+  {
+    "column_name": "start_date",
+    "data_type": "timestamp without time zone",
+    "is_nullable": "YES"
+  },
+  {
+    "column_name": "customer_name",
+    "data_type": "character varying",
+    "is_nullable": "NO"
+  },
+  {
+    "column_name": "status",
+    "data_type": "character varying",
+    "is_nullable": "YES"
+  },
+  {
+    "column_name": "billing_cycle",
+    "data_type": "character varying",
+    "is_nullable": "YES"
+  }
+]

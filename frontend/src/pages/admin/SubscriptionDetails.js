@@ -1,49 +1,87 @@
-import React, { useState } from 'react';
-import { ArrowRight, Check, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import SubscriptionFlow from './SubscriptionFlow';
 
-export default function SubscriptionDetail() {
-  const [status, setStatus] = useState('Draft'); 
-  const stages = ['Draft', 'Sent', 'Active', 'Closed'];
+const SubscriptionDetails = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [sub, setSub] = useState(null);
+
+  useEffect(() => {
+    const fetchSub = async () => {
+      try {
+        const res = await axios.get(`http://localhost:5000/api/subscriptions/${id}`);
+        setSub(res.data);
+      } catch (err) {
+        console.error("Fetch failed:", err);
+      }
+    };
+    fetchSub();
+  }, [id]);
+
+  if (!sub) return <div className="flex justify-center items-center h-64 text-gray-400 animate-pulse">Loading Subscription Data...</div>;
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6 bg-white p-4 rounded shadow-sm border-l-4 border-primary">
-        <div className="flex items-center gap-4">
-          <h1 className="text-2xl font-bold">SUB/2023/001</h1>
-          <span className="px-3 py-1 rounded-full text-sm font-bold bg-yellow-100 text-yellow-800">
-            {status}
-          </span>
-        </div>
-        <div className="flex gap-2">
-          <button onClick={() => setStatus('Active')} className="px-4 py-2 bg-primary text-white rounded">
-            Confirm
+    <div className="bg-gray-50 min-h-screen pb-12">
+      {/* Top Action Bar */}
+      <div className="flex justify-between items-center p-4 border-b bg-white shadow-sm sticky top-0 z-10">
+        <div className="flex space-x-2">
+          <button className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-1.5 rounded shadow-sm text-sm font-medium transition">
+            Renew
           </button>
-          <button onClick={() => setStatus('Closed')} className="px-4 py-2 bg-gray-200 text-gray-700 rounded">
+          <button className="border border-gray-300 hover:bg-gray-50 bg-white px-4 py-1.5 rounded text-sm font-medium text-gray-600 transition">
             Close
           </button>
+          <button className="border border-gray-300 hover:bg-gray-50 bg-white px-4 py-1.5 rounded text-sm font-medium text-gray-600 transition">
+            Register Payment
+          </button>
+        </div>
+        
+        {/* State Indicator [cite: 97, 118] */}
+        <div className="flex border border-gray-200 rounded-sm overflow-hidden text-[10px] font-bold uppercase tracking-widest shadow-inner">
+          <span className={`px-4 py-2 ${sub.status === 'Draft' ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-400 border-r border-gray-200'}`}>Draft</span>
+          <span className={`px-4 py-2 ${sub.status === 'Confirmed' ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-400 border-r border-gray-200'}`}>Confirmed</span>
+          <span className={`px-4 py-2 ${sub.status === 'Active' ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-400'}`}>Active</span>
         </div>
       </div>
 
-      {/* Progress Bar */}
-      <div className="flex mb-8 border-b pb-4">
-        {stages.map((stage, idx) => (
-          <div key={stage} className="flex items-center">
-            <span className={`mx-2 ${status === stage ? 'text-primary font-bold' : 'text-gray-400'}`}>{stage}</span>
-            {idx !== stages.length - 1 && <ArrowRight size={16} className="text-gray-300" />}
-          </div>
-        ))}
-      </div>
-      
-      <div className="bg-white p-6 rounded shadow-sm">
-        <h3 className="text-lg font-bold mb-4">Invoice Lines</h3>
-        <table className="w-full text-left">
-            <thead><tr className="border-b"><th className="pb-2">Product</th><th className="pb-2 text-right">Total</th></tr></thead>
-            <tbody>
-                <tr><td className="py-2">Monthly SaaS Plan</td><td className="py-2 text-right">$99.00</td></tr>
-            </tbody>
-        </table>
+      <SubscriptionFlow currentStatus={sub.status} />
+
+      {/* Main Content Card [cite: 83, 108] */}
+      <div className="max-w-5xl mx-auto bg-white border border-gray-200 shadow-xl mt-8 p-10 rounded-sm">
+        <header className="mb-10">
+          <h1 className="text-3xl font-bold text-gray-800 tracking-tight">
+            {sub.subscription_number || `Subscription / SUB-00${sub.id}`}
+          </h1>
+        </header>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
+          <section className="space-y-6">
+            <div>
+              <p className="text-xs font-black text-gray-400 uppercase mb-1">Customer</p>
+              <p className="text-xl text-gray-700 font-medium border-b border-gray-100 pb-2">{sub.customer_name || 'Not Assigned'}</p>
+            </div>
+            <div>
+              <p className="text-xs font-black text-gray-400 uppercase mb-1">Recurring Plan</p>
+              <p className="text-xl text-gray-700 font-medium border-b border-gray-100 pb-2">{sub.plan_name || 'Standard Plan'}</p>
+            </div>
+          </section>
+
+          <section className="space-y-6">
+            <div>
+              <p className="text-xs font-black text-gray-400 uppercase mb-1">Next Invoice Date</p>
+              <p className="text-xl text-purple-700 font-bold border-b border-gray-100 pb-2">{sub.next_invoice_date || 'N/A'}</p>
+            </div>
+            <div>
+              <p className="text-xs font-black text-gray-400 uppercase mb-1">Start Date</p>
+              <p className="text-xl text-gray-700 font-medium border-b border-gray-100 pb-2">{sub.start_date}</p>
+            </div>
+          </section>
+        </div>
       </div>
     </div>
   );
-}
+};
+
+export default SubscriptionDetails;

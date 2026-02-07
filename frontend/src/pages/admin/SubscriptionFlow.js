@@ -1,45 +1,53 @@
-import React, { useState } from 'react';
+import React from 'react';
 
-function SubscriptionFlow() {
-  const [step, setStep] = useState(1);
+const SubscriptionFlow = ({ currentStatus }) => {
+  // These steps follow the lifecycle defined in the documentation 
+  const steps = ["Draft", "Confirmed", "Active", "Closed"];
+  
+  // Find the index of the current status to highlight progress
+  const currentIndex = steps.indexOf(currentStatus);
 
   return (
-    <div className="p-6">
-      <h2 className="text-3xl font-bold mb-6">Subscription Flow</h2>
-      <div className="bg-white rounded-lg shadow p-6">
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className={`flex items-center justify-center w-10 h-10 rounded-full ${step >= 1 ? 'bg-primary text-white' : 'bg-gray-200'}`}>1</div>
-            <div className={`flex-1 h-1 mx-2 ${step >= 2 ? 'bg-primary' : 'bg-gray-200'}`}></div>
-            <div className={`flex items-center justify-center w-10 h-10 rounded-full ${step >= 2 ? 'bg-primary text-white' : 'bg-gray-200'}`}>2</div>
-            <div className={`flex-1 h-1 mx-2 ${step >= 3 ? 'bg-primary' : 'bg-gray-200'}`}></div>
-            <div className={`flex items-center justify-center w-10 h-10 rounded-full ${step >= 3 ? 'bg-primary text-white' : 'bg-gray-200'}`}>3</div>
-          </div>
-        </div>
+    <div className="w-full py-6 bg-gray-50 border-b border-gray-200">
+      <div className="flex items-center justify-center space-x-4 max-w-4xl mx-auto">
+        {steps.map((step, idx) => (
+          <React.Fragment key={step}>
+            <div className="flex items-center space-x-2">
+              {/* Step Circle */}
+              <div 
+                className={`w-6 h-6 rounded-full border-2 flex items-center justify-center text-[10px] font-bold transition-colors ${
+                  idx <= currentIndex 
+                    ? 'border-purple-600 bg-purple-600 text-white' 
+                    : 'border-gray-300 bg-white text-gray-400'
+                }`}
+              >
+                {idx + 1}
+              </div>
+              
+              {/* Step Label */}
+              <span 
+                className={`text-xs font-bold uppercase tracking-wider ${
+                  idx <= currentIndex ? 'text-purple-700' : 'text-gray-400'
+                }`}
+              >
+                {step}
+              </span>
+            </div>
 
-        {step === 1 && <div>Step 1: Select Plan</div>}
-        {step === 2 && <div>Step 2: Configure</div>}
-        {step === 3 && <div>Step 3: Review & Confirm</div>}
-
-        <div className="flex justify-between mt-6">
-          <button
-            onClick={() => setStep(Math.max(1, step - 1))}
-            className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
-            disabled={step === 1}
-          >
-            Previous
-          </button>
-          <button
-            onClick={() => setStep(Math.min(3, step + 1))}
-            className="px-4 py-2 bg-primary text-white rounded hover:bg-opacity-90"
-            disabled={step === 3}
-          >
-            Next
-          </button>
-        </div>
+            {/* Connecting Line */}
+            {idx < steps.length - 1 && (
+              <div 
+                className={`w-12 h-0.5 transition-colors ${
+                  idx < currentIndex ? 'bg-purple-600' : 'bg-gray-200'
+                }`} 
+              />
+            )}
+          </React.Fragment>
+        ))}
       </div>
     </div>
   );
-}
+};
 
+// Ensure the export name matches exactly what you import in SubscriptionDetails.js
 export default SubscriptionFlow;

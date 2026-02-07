@@ -11,6 +11,14 @@ router.get('/', subController.getSubscriptions);
 // Create a new Subscription (Defaults to 'Draft' status)
 router.post('/', subController.createSubscription);
 
+// GET /api/subscriptions/:id
+// Fetch a single subscription by ID
+router.get('/:id', subController.getSubscriptionById);
+
+// PUT /api/subscriptions/:id
+// Update an existing Subscription
+router.put('/:id', subController.updateSubscription);
+
 // PATCH /api/subscriptions/:id/status
 // Handles the logic for:
 // - "Send Quotation" button -> sets status to 'quotation_sent'
