@@ -4,6 +4,7 @@ import { useNavigate, Outlet } from 'react-router-dom';
 
 const SubscriptionList = () => {
   const [subscriptions, setSubscriptions] = useState([]);
+  const [selectedIds, setSelectedIds] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
 
@@ -29,12 +30,34 @@ const SubscriptionList = () => {
     <div className="p-6 bg-gray-50 min-h-screen">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Subscriptions</h1>
-        <button
-          onClick={() => navigate('/app/subscriptions/new')}
-          className="bg-purple-600 text-white px-4 py-2 rounded shadow hover:bg-purple-700 transition"
-        >
-          Create New
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={() => navigate('/app/subscriptions/new')}
+            className="bg-purple-600 text-white px-4 py-2 rounded shadow hover:bg-purple-700 transition"
+          >
+            Create New
+          </button>
+          <button
+            onClick={async () => {
+              if (selectedIds.length === 0) return;
+              if (!window.confirm(`Delete ${selectedIds.length} subscription(s)? This will remove related invoices and payments.`)) return;
+              try {
+                // send delete requests concurrently
+                await Promise.all(selectedIds.map(id => axios.delete(`http://localhost:5000/api/subscriptions/${id}`)));
+                // refresh list
+                setSelectedIds([]);
+                await fetchSubscriptions();
+              } catch (err) {
+                console.error('Error deleting subscriptions:', err);
+                alert('Failed to delete subscriptions. See console for details.');
+              }
+            }}
+            className={`px-4 py-2 rounded shadow ${selectedIds.length ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-gray-200 text-gray-600 cursor-not-allowed'}`}
+            disabled={selectedIds.length === 0}
+          >
+            Delete Selected
+          </button>
+        </div>
       </div>
 
       <div className="mb-4">
@@ -63,8 +86,20 @@ const SubscriptionList = () => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filtered.map((sub) => (
-                <tr key={sub.id} onClick={() => navigate(`/app/subscriptions/${sub.id}`)} className="hover:bg-gray-50 cursor-pointer transition">
-                  <td className="px-6 py-4 text-sm font-medium text-purple-600">{sub.subscription_number || `SUB/00${sub.id}`}</td>
+                <tr key={sub.id} className="hover:bg-gray-50 transition">
+                  <td className="px-4 py-4">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(sub.id)}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        if (e.target.checked) setSelectedIds(prev => [...prev, sub.id]);
+                        else setSelectedIds(prev => prev.filter(i => i !== sub.id));
+                      }}
+                      className="mr-2"
+                    />
+                    <span onClick={() => navigate(`/app/subscriptions/${sub.id}`)} className="text-sm font-medium text-purple-600 cursor-pointer">{sub.subscription_number || `SUB/00${sub.id}`}</span>
+                  </td>
                   <td className="px-6 py-4 text-sm text-gray-700">{sub.customer_name}</td>
                   <td className="px-6 py-4 text-sm text-gray-700">{sub.plan_name}</td>
                   <td className="px-6 py-4">

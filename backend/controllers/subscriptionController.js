@@ -125,3 +125,36 @@ exports.updateSubscription = async (req, res) => {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
+
+// Delete a subscription and its related invoices/payments (if any)
+exports.deleteSubscription = async (req, res) => {
+    const { id } = req.params;
+    try {
+        await db.query('BEGIN');
+
+        // Find invoices for this subscription
+        const invRes = await db.query('SELECT id FROM invoices WHERE subscription_id = $1', [id]);
+        const invoiceIds = invRes.rows.map(r => r.id);
+
+        if (invoiceIds.length > 0) {
+            // Delete payments linked to those invoices
+            await db.query('DELETE FROM payments WHERE invoice_id = ANY($1::int[])', [invoiceIds]);
+            // Delete invoices
+            await db.query('DELETE FROM invoices WHERE id = ANY($1::int[])', [invoiceIds]);
+        }
+
+        // Delete the subscription
+        const delRes = await db.query('DELETE FROM subscriptions WHERE id = $1 RETURNING *', [id]);
+        if (delRes.rows.length === 0) {
+            await db.query('ROLLBACK');
+            return res.status(404).json({ error: 'Subscription not found' });
+        }
+
+        await db.query('COMMIT');
+        res.json({ success: true, deleted: delRes.rows[0] });
+    } catch (err) {
+        try { await db.query('ROLLBACK'); } catch (e) {}
+        console.error('❌ deleteSubscription error:', err.message || err);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};

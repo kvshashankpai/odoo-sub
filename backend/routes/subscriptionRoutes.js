@@ -26,4 +26,8 @@ router.put('/:id', subController.updateSubscription);
 // - "Cancel" button -> sets status to 'cancelled'
 router.patch('/:id/status', subController.updateStatus);
 
+// DELETE /api/subscriptions/:id
+// Delete a subscription and related invoices/payments
+router.delete('/:id', subController.deleteSubscription);
+
 module.exports = router;
