@@ -1,8 +1,17 @@
 const express = require('express');
 const router = express.Router();
-const { createInvoice, updateInvoiceStatus } = require('../controllers/invoiceController');
+const {
+	createInvoice,
+	updateInvoiceStatus,
+	getInvoices,
+	getInvoiceById,
+} = require('../controllers/invoiceController');
 
-router.post('/create', createInvoice);
-router.post('/update-status', updateInvoiceStatus);
+// RESTful endpoints
+router.get('/', getInvoices);
+router.get('/:id', getInvoiceById);
+router.post('/', createInvoice);
+// Update status (PATCH /api/invoices/:id/status)
+router.patch('/:id/status', updateInvoiceStatus);
 
 module.exports = router;

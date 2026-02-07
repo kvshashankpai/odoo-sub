@@ -1,7 +1,7 @@
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
-export async function generateInvoicePDF(reference, customer, items, subtotal, tax, total) {
+export async function generateInvoicePDF(reference, customer, items, subtotal, tax, total, opts = { preview: false }) {
   try {
     const wrapper = document.createElement('div');
     wrapper.style.width = '800px';
@@ -79,7 +79,26 @@ export async function generateInvoicePDF(reference, customer, items, subtotal, t
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
     pdf.addImage(imgData, 'PNG', 8, 8, imgWidth, imgHeight);
-    pdf.save(`Invoice_${reference || Date.now()}.pdf`);
+
+    if (opts && opts.preview) {
+      // return a blob URL and open in new tab with an iframe for preview
+      const blob = pdf.output('blob');
+      const url = URL.createObjectURL(blob);
+      const w = window.open('about:blank');
+      if (w) {
+        // Write a minimal HTML to host the PDF in an iframe
+        w.document.write(`<!DOCTYPE html><html><head><title>Invoice Preview</title></head><body style="margin:0">` +
+          `<iframe src="${url}" style="border:none;width:100%;height:100vh"></iframe>` +
+          `</body></html>`);
+        w.document.close();
+      } else {
+        // Fallback: navigate current window
+        window.location.href = url;
+      }
+      return url;
+    } else {
+      pdf.save(`Invoice_${reference || Date.now()}.pdf`);
+    }
   } catch (err) {
     console.error('generateInvoicePDF error', err);
     throw err;

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { generateInvoicePDF } from '../../utils/pdfGenerator';
 import { useParams, useNavigate } from 'react-router-dom';
 
 const SubscriptionDetail = () => {
@@ -22,12 +23,56 @@ const SubscriptionDetail = () => {
   const fetchSubscription = async () => {
     try {
       const res = await fetch(`http://localhost:5000/api/subscriptions/${id}`);
-      const data = await res.json();
+      let data;
+      try {
+        data = await res.json();
+      } catch (e) {
+        const text = await res.text();
+        throw new Error(text || 'Invalid response from server');
+      }
+      if (!res.ok) throw new Error(data.error || data.message || JSON.stringify(data));
       setSub(data);
     } catch (err) {
       console.error("Error fetching subscription:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Helper to parse error bodies safely (JSON or text)
+  const parseError = async (res) => {
+    try {
+      const d = await res.json();
+      return d;
+    } catch (e) {
+      try {
+        return await res.text();
+      } catch (e2) {
+        return { error: 'Unknown error' };
+      }
+    }
+  };
+
+  // Preview PDF for quotation/subscription without creating an invoice
+  const handlePreviewPdf = async () => {
+    if (!sub) return;
+    try {
+      const reference = sub.id || sub.subscription_number || `SUB-${Date.now()}`;
+      const customer = { name: sub.customer_name || 'Customer', email: sub.customer_email || '' };
+      const items = [
+        {
+          name: sub.plan_name || `Subscription ${sub.id}`,
+          qty: 1,
+          salePrice: parseFloat(sub.total_amount) || 0,
+        }
+      ];
+      const subtotal = parseFloat(sub.total_amount) || 0;
+      const tax = 0; // if tax exists, compute here
+      const total = subtotal + tax;
+      await generateInvoicePDF(reference, customer, items, subtotal, tax, total, { preview: true });
+    } catch (err) {
+      console.error('Failed to generate preview PDF', err);
+      setActionError(err.message || 'Failed to generate preview');
     }
   };
 
@@ -45,9 +90,10 @@ const SubscriptionDetail = () => {
         body: JSON.stringify({ action: 'send_quotation' })
       });
       console.log('Response status:', res.status);
+      const data = await parseError(res);
       if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || 'Failed to send quotation');
+        const msg = typeof data === 'string' ? data : (data.error || data.message || JSON.stringify(data));
+        throw new Error(msg || 'Failed to send quotation');
       }
       await fetchSubscription(); // Refresh data to see new status
     } catch (err) {
@@ -70,9 +116,10 @@ const SubscriptionDetail = () => {
         body: JSON.stringify({ action: 'confirm' })
       });
       console.log('Response status:', res.status);
+      const data = await parseError(res);
       if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || 'Failed to confirm subscription');
+        const msg = typeof data === 'string' ? data : (data.error || data.message || JSON.stringify(data));
+        throw new Error(msg || 'Failed to confirm subscription');
       }
       await fetchSubscription();
     } catch (err) {
@@ -93,12 +140,25 @@ const SubscriptionDetail = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ subscriptionId: id })
       });
-      const data = await res.json();
+      const data = await parseError(res);
       if (res.ok) {
-        alert(`✅ Invoice Created! ID: ${data.invoice?.id || data.id}`);
+        // Instead of just alerting, generate and show the invoice PDF preview
+        const created = data.invoice || data;
+        const reference = created.invoice_number || `INV-${created.id || Date.now()}`;
+        const customer = { name: sub.customer_name || 'Customer', email: sub.customer_email || '' };
+        const amount = parseFloat(created.amount || created.total_amount || sub.total_amount || 0);
+        const items = [
+          { name: sub.plan_name || `Subscription ${sub.id}`, qty: 1, salePrice: amount }
+        ];
+
+        // Open preview of generated PDF
+        await generateInvoicePDF(reference, customer, items, amount, 0, amount, { preview: true });
+
+        // Refresh subscription data
         await fetchSubscription();
       } else {
-        throw new Error(data.error || 'Failed to create invoice');
+        const msg = typeof data === 'string' ? data : (data.error || data.message || JSON.stringify(data));
+        throw new Error(msg || 'Failed to create invoice');
       }
     } catch (err) {
       console.error('Error creating invoice:', err);
@@ -122,9 +182,10 @@ const SubscriptionDetail = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'cancel' })
       });
+      const data = await parseError(res);
       if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || 'Failed to cancel subscription');
+        const msg = typeof data === 'string' ? data : (data.error || data.message || JSON.stringify(data));
+        throw new Error(msg || 'Failed to cancel subscription');
       }
       await fetchSubscription();
       alert('✅ Subscription cancelled successfully');
@@ -161,12 +222,13 @@ const SubscriptionDetail = () => {
         body: JSON.stringify(renewalPayload)
       });
 
+      const data = await parseError(res);
       if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || 'Failed to renew subscription');
+        const msg = typeof data === 'string' ? data : (data.error || data.message || JSON.stringify(data));
+        throw new Error(msg || 'Failed to renew subscription');
       }
 
-      const newSub = await res.json();
+      const newSub = data;
       alert(`✅ Subscription renewed! New subscription ID: ${newSub.id}`);
       setShowRenewModal(false);
       await fetchSubscription();
@@ -206,12 +268,13 @@ const SubscriptionDetail = () => {
         body: JSON.stringify(upsellPayload)
       });
 
+      const data = await parseError(res);
       if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || 'Failed to create upsell');
+        const msg = typeof data === 'string' ? data : (data.error || data.message || JSON.stringify(data));
+        throw new Error(msg || 'Failed to create upsell');
       }
 
-      const newSub = await res.json();
+      const newSub = data;
       alert(`✅ Upsell subscription created! Amount increased to $${upsellAmount}`);
       setShowUpsellModal(false);
       await fetchSubscription();
@@ -269,7 +332,7 @@ const SubscriptionDetail = () => {
         {/* STATE: QUOTATION SENT */}
         {sub.status === 'quotation_sent' && (
           <div className="flex flex-wrap gap-3">
-            <button className="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 font-medium transition">
+            <button onClick={handlePreviewPdf} className="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 font-medium transition">
               📄 Preview PDF
             </button>
             <button 

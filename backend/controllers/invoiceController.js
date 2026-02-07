@@ -44,15 +44,77 @@ exports.createInvoice = async (req, res) => {
 
         // 2. Generate Invoice Data
         const invoiceNumber = `INV-${Date.now()}`;
-        const amount = subscription.total_amount;
+                const amount = subscription.total_amount || subscription.amount || 0;
 
-        // 3. Insert Invoice (Start in 'draft' state)
-        const insertQuery = `
-            INSERT INTO invoices (subscription_id, invoice_number, amount, status, issue_date)
-            VALUES ($1, $2, $3, 'draft', NOW())
-            RETURNING *`;
-            
-        const newInvoice = await db.query(insertQuery, [subscription.id, invoiceNumber, amount]);
+                // 3. Inspect invoice table columns and build an INSERT that matches the schema
+                // This avoids failures when the invoices table uses a different column name (e.g., total_amount)
+                const wantedCols = ['subscription_id','invoice_number','amount','total_amount','total','status','issue_date','issued_date','created_at','updated_at'];
+                const colsRes = await db.query(
+                    `SELECT column_name FROM information_schema.columns WHERE table_name = 'invoices' AND column_name = ANY($1::text[])`,
+                    [wantedCols]
+                );
+
+                const present = colsRes.rows.map(r => r.column_name);
+
+                // Determine which amount column exists
+                let amountCol = null;
+                if (present.includes('amount')) amountCol = 'amount';
+                else if (present.includes('total_amount')) amountCol = 'total_amount';
+                else if (present.includes('total')) amountCol = 'total';
+
+                // Determine issue/issued date column
+                let issueDateCol = null;
+                if (present.includes('issue_date')) issueDateCol = 'issue_date';
+                else if (present.includes('issued_date')) issueDateCol = 'issued_date';
+                else if (present.includes('created_at')) issueDateCol = 'created_at';
+
+                // Build insert columns and values
+                const insertCols = [];
+                const placeholders = [];
+                const values = [];
+
+                // subscription_id should exist in most schemas
+                if (present.includes('subscription_id')) {
+                    insertCols.push('subscription_id');
+                    placeholders.push(`$${placeholders.length + 1}`);
+                    values.push(subscription.id);
+                }
+
+                if (present.includes('invoice_number')) {
+                    insertCols.push('invoice_number');
+                    placeholders.push(`$${placeholders.length + 1}`);
+                    values.push(invoiceNumber);
+                }
+
+                if (amountCol) {
+                    insertCols.push(amountCol);
+                    placeholders.push(`$${placeholders.length + 1}`);
+                    values.push(amount);
+                }
+
+                if (present.includes('status')) {
+                    insertCols.push('status');
+                    placeholders.push(`$${placeholders.length + 1}`);
+                    values.push('draft');
+                }
+
+                if (issueDateCol) {
+                    // If created_at exists and other issue cols don't, only set created_at if it's allowed
+                    if (issueDateCol === 'created_at') {
+                        // Skip setting created_at to allow default CURRENT_TIMESTAMP unless explicitly desired
+                    } else {
+                        insertCols.push(issueDateCol);
+                        placeholders.push(`$${placeholders.length + 1}`);
+                        values.push(new Date());
+                    }
+                }
+
+                if (insertCols.length === 0) {
+                    return res.status(500).json({ error: 'No writable columns found in invoices table' });
+                }
+
+                const insertQuery = `INSERT INTO invoices (${insertCols.join(',')}) VALUES (${placeholders.join(',')}) RETURNING *`;
+                const newInvoice = await db.query(insertQuery, values);
 
         res.status(201).json({
             success: true,
