@@ -20,6 +20,8 @@ import ProductList from './pages/admin/ProductList.js';
 import ProductForm from './pages/admin/ProductForm.js';
 import SubscriptionList from './pages/admin/SubscriptionList.js';
 import SubscriptionDetail from './pages/admin/SubscriptionDetail.js';
+import InvoiceDraft from './pages/admin/InvoiceDraft.js';
+import Users from './pages/admin/Users.js';
 // --- NEW IMPORT HERE ---
 import SubscriptionForm from './components/SubscriptionForm.js'; 
 // -----------------------
@@ -83,6 +85,10 @@ export default function App() {
                 
                 {/* Other Admin Routes */}
                 <Route path="reporting" element={<Reporting />} />
+                {/* Invoice Draft (view & actions for newly created invoices) */}
+                <Route path="invoices/draft/:id" element={<InvoiceDraft />} />
+                {/* Users/Contacts - admin only */}
+                <Route path="users" element={<ProtectedRoute allowedRoles={['admin']}><Users /></ProtectedRoute>} />
                 <Route path="configuration" element={<Configuration />} />
                 <Route path="discounts" element={<DiscountList />} />
                 <Route path="discounts/new" element={<DiscountForm />} />

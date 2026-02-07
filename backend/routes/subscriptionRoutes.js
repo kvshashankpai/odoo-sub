@@ -15,6 +15,9 @@ router.post('/', subController.createSubscription);
 // Fetch a single subscription by ID
 router.get('/:id', subController.getSubscriptionById);
 
+// GET children of a subscription
+router.get('/:id/children', subController.getChildren);
+
 // PUT /api/subscriptions/:id
 // Update an existing Subscription
 router.put('/:id', subController.updateSubscription);

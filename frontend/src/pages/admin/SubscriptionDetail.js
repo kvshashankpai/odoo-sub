@@ -151,7 +151,15 @@ const SubscriptionDetail = () => {
           { name: sub.plan_name || `Subscription ${sub.id}`, qty: 1, salePrice: amount }
         ];
 
-        // Open preview of generated PDF
+        // Redirect user to draft invoice page so they can confirm/cancel
+        // The backend returns redirectUrl like /invoices/draft/:id — map to front-end route
+        const invoiceId = created.id || created.invoice?.id || created.invoice_id;
+        if (invoiceId) {
+          navigate(`/app/invoices/draft/${invoiceId}`);
+          return;
+        }
+
+        // Fallback: open preview
         await generateInvoicePDF(reference, customer, items, amount, 0, amount, { preview: true });
 
         // Refresh subscription data

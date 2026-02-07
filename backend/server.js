@@ -9,6 +9,7 @@ const authRoutes = require('./routes/authRoutes');
 const subscriptionRoutes = require('./routes/subscriptionRoutes');
 const invoiceRoutes = require('./routes/invoiceRoutes');
 const productRoutes = require('./routes/productRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -27,6 +28,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/invoices', invoiceRoutes);
 app.use('/api/products', productRoutes);
+app.use('/api/admin', adminRoutes);
 
 // --- ERROR HANDLING ---
 app.use((err, req, res, next) => {

@@ -3,7 +3,8 @@ import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { 
   LayoutDashboard, ShoppingCart, FileText, Package, LogOut, 
-  BarChart, Settings, ShoppingBag, CreditCard, Tag, Menu
+  BarChart, Settings, ShoppingBag, CreditCard, Tag, Menu,
+  Users as UsersIcon,
 } from 'lucide-react';
 
 export default function Layout({ type = 'admin' }) {
@@ -20,6 +21,8 @@ export default function Layout({ type = 'admin' }) {
     { path: '/app/configuration', label: 'Configuration', icon: Settings },
     { path: '/app/discounts', label: 'Discounts', icon: Tag },
     { path: '/app/payments', label: 'Payments', icon: CreditCard },
+    // Add Users/Contacts link only for admins so they can create internal users
+    ...(user?.role === 'admin' ? [{ path: '/app/users', label: 'Users/Contacts', icon: UsersIcon }] : []),
   ];
 
   // Portal Navigation

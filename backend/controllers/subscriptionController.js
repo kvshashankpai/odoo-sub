@@ -28,8 +28,18 @@ exports.getSubscriptionById = async (req, res) => {
     }
 };
 
+exports.getChildren = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const result = await db.query('SELECT * FROM subscriptions WHERE parent_subscription_id = $1 ORDER BY created_at DESC', [id]);
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
 exports.createSubscription = async (req, res) => {
-    const { customer_name, billing_cycle, start_date, total_amount } = req.body;
+    const { customer_name, billing_cycle, start_date, total_amount, parent_subscription_id } = req.body;
 
     try {
         console.log('📥 createSubscription body:', req.body);
@@ -38,10 +48,21 @@ exports.createSubscription = async (req, res) => {
             return res.status(400).json({ error: "Customer Name is required" });
         }
 
-        const result = await db.query(
-            'INSERT INTO subscriptions (customer_name, billing_cycle, start_date, total_amount, status, created_at) VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING *',
-            [customer_name, billing_cycle || 'Monthly', start_date || null, total_amount || 0, 'draft']
-        );
+                // Check if parent_subscription_id column exists and build insert accordingly
+                const colRes = await db.query("SELECT column_name FROM information_schema.columns WHERE table_name='subscriptions'");
+                const existingCols = colRes.rows.map(r => r.column_name);
+
+                const insertFields = ['customer_name','billing_cycle','start_date','total_amount','status','created_at'];
+                const values = [customer_name, billing_cycle || 'Monthly', start_date || null, total_amount || 0, 'draft'];
+
+                if (existingCols.includes('parent_subscription_id') && parent_subscription_id) {
+                    insertFields.splice(4, 0, 'parent_subscription_id'); // insert before status
+                    values.splice(4, 0, parent_subscription_id);
+                }
+
+                const placeholders = insertFields.map((_, i) => `$${i+1}`);
+                const query = `INSERT INTO subscriptions (${insertFields.join(',')}) VALUES (${placeholders.join(',')}) RETURNING *`;
+                const result = await db.query(query, values);
 
         res.status(201).json(result.rows[0]);
     } catch (err) {
