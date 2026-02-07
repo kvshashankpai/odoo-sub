@@ -1,3 +1,5 @@
+// OLD MYSQL SERVER (ARCHIVED - kept for reference)
+// This was the old MySQL-based server. Now using PostgreSQL in server.js
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');

@@ -4,6 +4,10 @@ const jwt = require('jsonwebtoken');
 
 // 1. SIGNUP LOGIC
 exports.signup = async (req, res) => {
+
+    console.log("🔥 SIGNUP REQUEST RECEIVED!");
+    console.log("Data:", req.body);
+    
     const { name, email, password } = req.body;
 
     try {

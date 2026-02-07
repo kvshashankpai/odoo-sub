@@ -1,3 +1,4 @@
+// OLD MYSQL CONNECTION TEST (ARCHIVED - kept for reference)
 require('dotenv').config();
 const db = require('./db');
 
@@ -28,14 +29,15 @@ async function test() {
     console.log('Using DATABASE_URL:', info);
 
     console.log('Attempting simple query: SELECT 1');
-    const rows = await db.query('SELECT 1 AS ok');
-    console.log('Query result:', rows);
-    console.log('DB connection OK');
-    process.exit(0);
+    const result = await db.query('SELECT 1 as result');
+    console.log('✅ Success:', result);
+
+    console.log('Fetching products...');
+    const products = await db.query('SELECT * FROM products LIMIT 5');
+    console.log('✅ Products:', products);
+
   } catch (err) {
-    console.error('DB connection test failed:');
-    console.error(err && err.stack ? err.stack : err);
-    process.exit(1);
+    console.error('❌ Connection failed:', err.code, err.message);
   }
 }
 
