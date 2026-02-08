@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api';
-import { 
-  LayoutDashboard, ShoppingCart, FileText, Package, LogOut, 
+import {
+  LayoutDashboard, ShoppingCart, FileText, Package, LogOut,
   BarChart, Settings, ShoppingBag, CreditCard, Tag, Menu, Bell,
   Users as UsersIcon,
 } from 'lucide-react';
@@ -32,7 +32,6 @@ export default function Layout({ type = 'admin' }) {
     { path: '/portal', label: 'Home', icon: LayoutDashboard },
     { path: '/portal/shop', label: 'Shop', icon: ShoppingBag },
     { path: '/portal/cart', label: 'Cart', icon: ShoppingCart },
-    { path: '/portal/orders', label: 'My Orders', icon: FileText },
     { path: '/portal/subscription', label: 'My Subscription', icon: CreditCard },
     { path: '/portal/notifications', label: 'Notifications', icon: Bell },
   ];
@@ -62,7 +61,7 @@ export default function Layout({ type = 'admin' }) {
       try {
         const u = e?.detail?.unread;
         if (typeof u === 'number') setUnreadCount(u);
-      } catch (err) {}
+      } catch (err) { }
     };
     window.addEventListener('notifications:updated', handler);
     return () => clearInterval(t);
@@ -91,9 +90,8 @@ export default function Layout({ type = 'admin' }) {
                 <Link
                   key={link.path}
                   to={link.path}
-                  className={`flex items-center gap-3 px-4 py-3 rounded transition-colors ${
-                    isActive ? 'bg-white/10 text-white' : 'text-white/70 hover:bg-white/5'
-                  }`}
+                  className={`flex items-center gap-3 px-4 py-3 rounded transition-colors ${isActive ? 'bg-white/10 text-white' : 'text-white/70 hover:bg-white/5'
+                    }`}
                 >
                   <Icon size={18} />
                   {link.label}
@@ -112,7 +110,7 @@ export default function Layout({ type = 'admin' }) {
                 <p className="text-xs text-white/60 capitalize">{user?.role}</p>
               </div>
             </div>
-            <button 
+            <button
               onClick={handleLogout}
               className="flex items-center gap-2 w-full px-2 py-2 text-sm text-red-200 hover:text-white transition"
             >

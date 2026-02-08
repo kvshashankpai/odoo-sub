@@ -1,13 +1,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FileText, ShoppingBag, CreditCard } from 'lucide-react';
+import { ShoppingBag, CreditCard } from 'lucide-react';
 
 export default function PortalHome() {
   const navigate = useNavigate();
 
   const tiles = [
     { title: 'Shop Plans', icon: ShoppingBag, path: '/portal/shop', count: null, color: 'text-purple-600', bg: 'bg-purple-50' },
-    { title: 'My Quotations', icon: FileText, path: '/portal/orders', count: '1', color: 'text-blue-600', bg: 'bg-blue-50' },
     { title: 'My Subscription', icon: CreditCard, path: '/portal/subscription', count: 'Active', color: 'text-green-600', bg: 'bg-green-50' },
   ];
 
@@ -21,7 +20,7 @@ export default function PortalHome() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {tiles.map((tile) => (
-            <div 
+            <div
               key={tile.title}
               onClick={() => navigate(tile.path)}
               className="bg-white p-6 rounded-xl shadow hover:shadow-md transition cursor-pointer flex flex-col items-center justify-center h-48 group border border-gray-100"
