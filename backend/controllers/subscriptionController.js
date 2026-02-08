@@ -39,7 +39,7 @@ exports.getChildren = async (req, res) => {
 };
 
 exports.createSubscription = async (req, res) => {
-    const { customer_name, billing_cycle, start_date, total_amount, parent_subscription_id } = req.body;
+    const { customer_name, billing_cycle, start_date, total_amount, parent_subscription_id, variant_id } = req.body;
 
     try {
         console.log('📥 createSubscription body:', req.body);
@@ -48,7 +48,7 @@ exports.createSubscription = async (req, res) => {
             return res.status(400).json({ error: "Customer Name is required" });
         }
 
-                // Check if parent_subscription_id column exists and build insert accordingly
+                // Check if columns exist and build insert accordingly
                 const colRes = await db.query("SELECT column_name FROM information_schema.columns WHERE table_name='subscriptions'");
                 const existingCols = colRes.rows.map(r => r.column_name);
 
@@ -58,6 +58,11 @@ exports.createSubscription = async (req, res) => {
                 if (existingCols.includes('parent_subscription_id') && parent_subscription_id) {
                     insertFields.push('parent_subscription_id');
                     values.push(parent_subscription_id);
+                }
+
+                if (existingCols.includes('variant_id') && variant_id) {
+                    insertFields.push('variant_id');
+                    values.push(variant_id);
                 }
 
                 // Add created_at if it exists in the table schema
@@ -73,6 +78,66 @@ exports.createSubscription = async (req, res) => {
         res.status(201).json(result.rows[0]);
     } catch (err) {
         console.error('❌ createSubscription error:', err.stack || err.message);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
+// Bulk create subscriptions from cart items
+exports.createFromCart = async (req, res) => {
+    const { items, customer_name, billing_cycle, start_date } = req.body;
+
+    try {
+        if (!items || !Array.isArray(items) || items.length === 0) {
+            return res.status(400).json({ error: "Items array is required" });
+        }
+
+        if (!customer_name) {
+            return res.status(400).json({ error: "Customer name is required" });
+        }
+
+        // Get existing columns
+        const colRes = await db.query("SELECT column_name FROM information_schema.columns WHERE table_name='subscriptions'");
+        const existingCols = colRes.rows.map(r => r.column_name);
+
+        const createdSubscriptions = [];
+
+        for (const item of items) {
+            const insertFields = ['customer_name', 'billing_cycle', 'start_date', 'total_amount', 'status', 'product_id'];
+            const values = [
+                customer_name,
+                billing_cycle || 'Monthly',
+                start_date || null,
+                item.price || 0,
+                'draft',
+                item.id
+            ];
+
+            // Add variant_id if item has one and column exists
+            if (existingCols.includes('variant_id') && item.variantId) {
+                insertFields.push('variant_id');
+                values.push(item.variantId);
+            }
+
+            // Add created_at if it exists
+            if (existingCols.includes('created_at')) {
+                insertFields.push('created_at');
+                values.push(new Date().toISOString());
+            }
+
+            const placeholders = insertFields.map((_, i) => `$${i+1}`);
+            const query = `INSERT INTO subscriptions (${insertFields.join(',')}) VALUES (${placeholders.join(',')}) RETURNING *`;
+            
+            const result = await db.query(query, values);
+            createdSubscriptions.push(result.rows[0]);
+        }
+
+        res.status(201).json({
+            success: true,
+            count: createdSubscriptions.length,
+            subscriptions: createdSubscriptions
+        });
+    } catch (err) {
+        console.error('❌ createFromCart error:', err.stack || err.message);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };

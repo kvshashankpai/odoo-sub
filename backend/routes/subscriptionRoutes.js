@@ -11,6 +11,10 @@ router.get('/', subController.getSubscriptions);
 // Create a new Subscription (Defaults to 'Draft' status)
 router.post('/', subController.createSubscription);
 
+// POST /api/subscriptions/from-cart
+// Bulk create subscriptions from cart items with variant tracking
+router.post('/from-cart', subController.createFromCart);
+
 // GET /api/subscriptions/:id
 // Fetch a single subscription by ID
 router.get('/:id', subController.getSubscriptionById);

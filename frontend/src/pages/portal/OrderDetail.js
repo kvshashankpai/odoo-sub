@@ -1,6 +1,7 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Printer, Download } from 'lucide-react';
+import axios from 'axios';
 import { useCart } from '../../context/CartContext';
 import { useData } from '../../context/DataContext';
 import { generateInvoicePDF } from '../../utils/pdfGenerator';
@@ -9,6 +10,8 @@ export default function OrderDetail() {
   const navigate = useNavigate();
   const { lastOrder } = useCart();
   const { products, taxConfig } = useData();
+  const [savingSubscriptions, setSavingSubscriptions] = useState(false);
+  const [message, setMessage] = useState(null);
 
   // Enrich cart items with product details and calculate totals
   const orderData = useMemo(() => {
@@ -53,6 +56,41 @@ export default function OrderDetail() {
     }
   };
 
+  const handleSaveSubscriptions = async () => {
+    if (!lastOrder || !lastOrder.items || lastOrder.items.length === 0) {
+      setMessage({ type: 'error', text: 'No items in order to save' });
+      return;
+    }
+
+    setSavingSubscriptions(true);
+    try {
+      const response = await axios.post('http://localhost:5000/api/subscriptions/from-cart', {
+        items: lastOrder.items,
+        customer_name: 'Portal User', // In production, get from user auth
+        billing_cycle: 'Monthly',
+        start_date: new Date().toISOString().split('T')[0]
+      });
+
+      setMessage({
+        type: 'success',
+        text: `✅ Created ${response.data.count} subscription(s) successfully!`
+      });
+
+      // Redirect to subscriptions list after 2 seconds
+      setTimeout(() => {
+        navigate('/portal/my-subscriptions');
+      }, 2000);
+    } catch (err) {
+      console.error('Failed to save subscriptions:', err);
+      setMessage({
+        type: 'error',
+        text: `❌ Failed to save subscriptions: ${err.response?.data?.error || err.message}`
+      });
+    } finally {
+      setSavingSubscriptions(false);
+    }
+  };
+
   const handlePrint = handleDownload;
 
   // Fallback if no order
@@ -88,6 +126,12 @@ export default function OrderDetail() {
             </button>
           </div>
         </div>
+
+        {message && (
+          <div className={`mb-4 p-3 rounded ${message.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+            {message.text}
+          </div>
+        )}
 
         <div className="bg-white p-8 rounded shadow-lg border border-gray-200">
           <div className="border-b pb-6 mb-8 flex justify-between items-start">
@@ -126,6 +170,7 @@ export default function OrderDetail() {
               <thead>
                 <tr className="border-b border-gray-300">
                   <th className="py-3 font-semibold text-gray-600">Product</th>
+                  <th className="py-3 font-semibold text-gray-600 text-center">Variant</th>
                   <th className="py-3 font-semibold text-gray-600 text-center">Quantity</th>
                   <th className="py-3 font-semibold text-gray-600 text-right">Unit Price</th>
                   <th className="py-3 font-semibold text-gray-600 text-right">Amount</th>
@@ -137,6 +182,7 @@ export default function OrderDetail() {
                     <td className="py-4">
                       <span className="font-medium">{item.name}</span>
                     </td>
+                    <td className="py-4 text-center text-sm">{item.variantName || 'Standard'}</td>
                     <td className="py-4 text-center">{item.qty || 1}</td>
                     <td className="py-4 text-right">${(item.salePrice || item.price).toFixed(2)}</td>
                     <td className="py-4 text-right font-medium">${((item.salePrice || item.price) * (item.qty || 1)).toFixed(2)}</td>
@@ -147,7 +193,7 @@ export default function OrderDetail() {
           </div>
 
           {/* Totals */}
-          <div className="flex justify-end">
+          <div className="flex justify-end mb-8">
             <div className="w-64 space-y-3">
               <div className="flex justify-between text-gray-600">
                 <span>Subtotal</span>
@@ -162,6 +208,23 @@ export default function OrderDetail() {
                 <span>${orderData.total.toFixed(2)}</span>
               </div>
             </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-3 pt-4 border-t">
+            <button
+              onClick={handleSaveSubscriptions}
+              disabled={savingSubscriptions}
+              className="flex-1 py-3 bg-primary text-white rounded font-semibold hover:bg-opacity-90 transition disabled:opacity-60"
+            >
+              {savingSubscriptions ? 'Saving...' : 'Save Subscriptions'}
+            </button>
+            <button
+              onClick={() => navigate('/portal/shop')}
+              className="flex-1 py-3 border border-gray-300 text-gray-700 rounded font-semibold hover:bg-gray-50 transition"
+            >
+              Continue Shopping
+            </button>
           </div>
         </div>
       </div>

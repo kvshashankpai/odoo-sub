@@ -27,21 +27,22 @@ export const CartProvider = ({ children }) => {
 
   const addToCart = (product) => {
     setItems((prev) => {
-      const existing = prev.find((p) => p.id === product.id);
+      const compositeKey = `${product.id}-${product.variantId || 'standard'}`;
+      const existing = prev.find((p) => `${p.id}-${p.variantId || 'standard'}` === compositeKey);
       if (existing) {
-        return prev.map((p) => p.id === product.id ? { ...p, qty: p.qty + 1 } : p);
+        return prev.map((p) => `${p.id}-${p.variantId || 'standard'}` === compositeKey ? { ...p, qty: p.qty + 1 } : p);
       }
       return [...prev, { ...product, qty: 1 }];
     });
   };
 
-  const removeFromCart = (id) => setItems((prev) => prev.filter((p) => p.id !== id));
+  const removeFromCart = (compositeId) => setItems((prev) => prev.filter((p) => `${p.id}-${p.variantId || 'standard'}` !== compositeId));
 
-  const updateQty = (id, qty) => setItems((prev) => prev.map((p) => p.id === id ? { ...p, qty: Math.max(1, qty) } : p));
+  const updateQty = (compositeId, qty) => setItems((prev) => prev.map((p) => `${p.id}-${p.variantId || 'standard'}` === compositeId ? { ...p, qty: Math.max(1, qty) } : p));
 
   const clearCart = () => setItems([]);
 
-  const subtotal = items.reduce((s, it) => s + ((it.salePrice || it.price) * (it.qty || 1)), 0);
+  const subtotal = items.reduce((s, it) => s + ((it.price || it.salePrice) * (it.qty || 1)), 0);
 
   // Compute applicable discount based on current discounts from DataContext
   const { discounts } = useData();

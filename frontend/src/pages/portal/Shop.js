@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check } from 'lucide-react';
+import { Check, X } from 'lucide-react';
+import axios from 'axios';
 import { useCart } from '../../context/CartContext';
 import { useData } from '../../context/DataContext';
 
@@ -63,15 +64,132 @@ export default function Shop() {
 function AddToCartButton({ product }){
   const { addToCart } = useCart();
   const navigate = useNavigate();
+  const [showVariantModal, setShowVariantModal] = useState(false);
+  const [variants, setVariants] = useState([]);
+  const [selectedVariant, setSelectedVariant] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    // Fetch variants as soon as this product card mounts so the modal
+    // can open immediately when user clicks "Add to Cart".
+    const fetchVariants = async () => {
+      try {
+        const res = await axios.get(`http://localhost:5000/api/variants/product/${product.id}`);
+        setVariants(res.data || []);
+      } catch (e) {
+        console.error('Failed to fetch variants:', e);
+        setVariants([]);
+      }
+    };
+
+    fetchVariants();
+  }, [product.id]);
 
   const handle = () => {
-    addToCart({ id: product.id, name: product.name, price: product.salePrice });
+    if (variants.length > 0) {
+      setShowVariantModal(true);
+    } else {
+      // No variants, add base product directly
+      addToCart({
+        id: product.id,
+        name: product.name,
+        price: product.salePrice,
+        variantId: null,
+        variantName: 'Standard',
+        additionalPrice: 0,
+        basePrice: product.salePrice
+      });
+      navigate('/portal/cart');
+    }
+  };
+
+  const handleSelectVariant = (variant) => {
+    const additional = parseFloat(variant.additional_price) || 0;
+    const base = parseFloat(product.salePrice) || 0;
+    const totalPrice = base + additional;
+    addToCart({
+      id: product.id,
+      name: product.name,
+      price: totalPrice,
+      variantId: variant.id,
+      variantName: variant.name,
+      additionalPrice: additional,
+      basePrice: base
+    });
+    setShowVariantModal(false);
+    setSelectedVariant(null);
+    navigate('/portal/cart');
+  };
+
+  const handleSelectBase = () => {
+    const base = parseFloat(product.salePrice) || 0;
+    addToCart({
+      id: product.id,
+      name: product.name,
+      price: base,
+      variantId: null,
+      variantName: 'Standard',
+      additionalPrice: 0,
+      basePrice: base
+    });
+    setShowVariantModal(false);
+    setSelectedVariant(null);
     navigate('/portal/cart');
   };
 
   return (
-    <button onClick={handle} className="w-full py-3 rounded-lg font-semibold transition bg-primary text-white hover:bg-opacity-95">
-      Add to Cart
-    </button>
+    <>
+      <button onClick={handle} className="w-full py-3 rounded-lg font-semibold transition bg-primary text-white hover:bg-opacity-95">
+        Add to Cart
+      </button>
+
+      {showVariantModal && variants.length > 0 && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-md w-full p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold text-gray-800">Select Variant</h2>
+              <button onClick={() => setShowVariantModal(false)} className="text-gray-500 hover:text-gray-700">
+                <X size={24} />
+              </button>
+            </div>
+            <p className="text-gray-600 mb-4">Choose a variant for <strong>{product.name}</strong></p>
+            
+            <div className="space-y-3 max-h-64 overflow-y-auto">
+              {/* Standard/Base option */}
+              <button
+                onClick={handleSelectBase}
+                className="w-full p-3 border-2 border-gray-200 rounded-lg hover:border-primary hover:bg-primary/5 transition text-left"
+              >
+                <div className="font-semibold text-gray-800">Standard</div>
+                <div className="text-sm text-gray-600">Base product - No additional cost</div>
+                <div className="text-primary font-bold mt-1">${(parseFloat(product.salePrice) || 0).toFixed(2)}</div>
+              </button>
+
+              {/* Variant options */}
+              {variants.map((variant) => {
+                const additional = parseFloat(variant.additional_price) || 0;
+                const base = parseFloat(product.salePrice) || 0;
+                return (
+                  <button
+                    key={variant.id}
+                    onClick={() => handleSelectVariant(variant)}
+                    className="w-full p-3 border-2 border-gray-200 rounded-lg hover:border-primary hover:bg-primary/5 transition text-left"
+                  >
+                    <div className="font-semibold text-gray-800">{variant.name}</div>
+                    {variant.description && <div className="text-sm text-gray-600">{variant.description}</div>}
+                    <div className="text-primary font-bold mt-1">
+                      ${(base + additional).toFixed(2)}
+                      {additional > 0 && (
+                        <span className="text-xs text-gray-600 ml-2">(+${additional.toFixed(2)})</span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

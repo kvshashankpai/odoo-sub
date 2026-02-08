@@ -30,23 +30,34 @@ export default function Cart() {
                     <td colSpan="4" className="p-6 text-center text-gray-500">Your cart is empty.</td>
                   </tr>
                 )}
-                {items.map((it) => (
-                  <tr key={it.id} className="border-b hover:bg-gray-50 transition">
-                    <td className="p-4">
-                      <div className="font-bold text-gray-800">{it.name}</div>
-                      <div className="text-sm text-gray-500">Subscription</div>
-                    </td>
-                    <td className="p-4 text-center">
-                      <input type="number" value={it.qty} onChange={(e) => updateQty(it.id, parseInt(e.target.value || '1', 10))} className="w-16 border rounded p-1 text-center" />
-                    </td>
-                    <td className="p-4 text-right font-medium">${(it.price * it.qty).toFixed(2)}</td>
-                    <td className="p-4 text-center text-red-500 cursor-pointer hover:bg-red-50 rounded">
-                      <button onClick={() => removeFromCart(it.id)} aria-label="remove">
-                        <Trash2 size={18} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {items.map((it) => {
+                  const compositeId = `${it.id}-${it.variantId || 'standard'}`;
+                  const additional = parseFloat(it.additionalPrice) || 0;
+                  const base = (typeof it.basePrice !== 'undefined') ? (parseFloat(it.basePrice) || 0) : (parseFloat(it.price) - additional) || 0;
+                  const unitPrice = parseFloat(it.price) || base + additional;
+                  return (
+                    <tr key={compositeId} className="border-b hover:bg-gray-50 transition">
+                      <td className="p-4">
+                        <div className="font-bold text-gray-800">{it.name}</div>
+                        <div className="text-sm text-gray-600">
+                          <span className="block">Variant: <span className="font-medium">{it.variantName || 'Standard'}</span></span>
+                          {additional > 0 && (
+                            <span className="block text-xs text-gray-500">Base: ${base.toFixed(2)} + Variant: ${additional.toFixed(2)}</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="p-4 text-center">
+                        <input type="number" value={it.qty} onChange={(e) => updateQty(compositeId, parseInt(e.target.value || '1', 10))} className="w-16 border rounded p-1 text-center" />
+                      </td>
+                      <td className="p-4 text-right font-medium">${(unitPrice * (it.qty || 1)).toFixed(2)}</td>
+                      <td className="p-4 text-center text-red-500 cursor-pointer hover:bg-red-50 rounded">
+                        <button onClick={() => removeFromCart(compositeId)} aria-label="remove">
+                          <Trash2 size={18} />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

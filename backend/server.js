@@ -46,12 +46,18 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Internal Server Error' });
 });
 
-// --- DATABASE CHECK & START SERVER ---
 db.query('SELECT NOW()', (err, res) => {
   if (err) {
     console.error("❌ Database Connection Failed:", err.stack);
   } else {
     console.log("✅ PostgreSQL Connected Successfully (Cloud/Local)");
+    
+    // Ensure subscriptions table has variant_id column
+    const addVariantColumn = `
+      ALTER TABLE subscriptions 
+      ADD COLUMN IF NOT EXISTS variant_id INTEGER
+    `;
+
     // Ensure notifications table exists
     const createNotifications = `
       CREATE TABLE IF NOT EXISTS notifications (
@@ -91,17 +97,23 @@ db.query('SELECT NOW()', (err, res) => {
       )
     `;
 
-    db.query(createNotifications, (createErr1) => {
-      if (createErr1) console.error('❌ Could not ensure notifications table:', createErr1.stack || createErr1);
-      
-      db.query(createVariants, (createErr2) => {
-        if (createErr2) console.error('❌ Could not ensure product_variants table:', createErr2.stack || createErr2);
+    db.query(addVariantColumn, (addColErr) => {
+      if (addColErr && !addColErr.message.includes('already exists')) {
+        console.error('⚠️ Note: variant_id column status:', addColErr.message);
+      }
+
+      db.query(createNotifications, (createErr1) => {
+        if (createErr1) console.error('❌ Could not ensure notifications table:', createErr1.stack || createErr1);
         
-        db.query(createRecurringPrices, (createErr3) => {
-          if (createErr3) console.error('❌ Could not ensure recurring_prices table:', createErr3.stack || createErr3);
+        db.query(createVariants, (createErr2) => {
+          if (createErr2) console.error('❌ Could not ensure product_variants table:', createErr2.stack || createErr2);
           
-          app.listen(PORT, () => {
-            console.log(`🚀 Server running on http://localhost:${PORT}`);
+          db.query(createRecurringPrices, (createErr3) => {
+            if (createErr3) console.error('❌ Could not ensure recurring_prices table:', createErr3.stack || createErr3);
+            
+            app.listen(PORT, () => {
+              console.log(`🚀 Server running on http://localhost:${PORT}`);
+            });
           });
         });
       });
