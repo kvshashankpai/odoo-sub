@@ -24,8 +24,8 @@ export default function PaymentList() {
         <div className="flex gap-3">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-            <input 
-              placeholder="Search..." 
+            <input
+              placeholder="Search..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 w-64"
@@ -54,20 +54,20 @@ export default function PaymentList() {
             {enrichedPayments
               .filter(p => p.customer.toLowerCase().includes(searchTerm.toLowerCase()) || p.id.toLowerCase().includes(searchTerm.toLowerCase()))
               .map((p) => (
-              <tr key={p.id} className="hover:bg-gray-50 transition">
-                <td className="px-6 py-4 font-bold text-primary">{p.id}</td>
-                <td className="px-6 py-4">{p.date}</td>
-                <td className="px-6 py-4">{p.customer}</td>
-                <td className="px-6 py-4 text-sm text-gray-500">{p.invoiceId}</td>
-                <td className="px-6 py-4 text-sm capitalize">{p.method}</td>
-                <td className="px-6 py-4 text-right font-medium">${p.amount.toFixed(2)}</td>
-                <td className="px-6 py-4 text-center">
-                  <span className={`px-2 py-1 rounded-full text-xs font-bold ${p.status === 'Posted' ? 'bg-green-100 text-green-700' : p.status === 'Pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-200 text-gray-600'}`}>
-                    {p.status}
-                  </span>
-                </td>
-              </tr>
-            ))}
+                <tr key={p.id} className="hover:bg-gray-50 transition">
+                  <td className="px-6 py-4 font-bold text-primary">{p.id}</td>
+                  <td className="px-6 py-4">{p.date}</td>
+                  <td className="px-6 py-4">{p.customer}</td>
+                  <td className="px-6 py-4 text-sm text-gray-500">{p.invoiceId}</td>
+                  <td className="px-6 py-4 text-sm capitalize">{p.method}</td>
+                  <td className="px-6 py-4 text-right font-medium">₹{p.amount.toFixed(2)}</td>
+                  <td className="px-6 py-4 text-center">
+                    <span className={`px-2 py-1 rounded-full text-xs font-bold ${p.status === 'Posted' ? 'bg-green-100 text-green-700' : p.status === 'Pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-200 text-gray-600'}`}>
+                      {p.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
           </tbody>
         </table>
       </div>

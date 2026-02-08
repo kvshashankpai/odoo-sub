@@ -19,7 +19,7 @@ export default function ProductForm() {
     type: 'Service',
     salePrice: '',
     costPrice: '',
-    tax: '', 
+    tax: '',
     notes: '',
     ...product
   });
@@ -180,7 +180,7 @@ export default function ProductForm() {
         <h1 className="text-2xl font-bold text-gray-800">
           {isNew ? 'New Product' : 'Edit Product'}
         </h1>
-        
+
         <div className="flex gap-3">
           <button
             onClick={() => navigate('/app/products')}
@@ -225,7 +225,7 @@ export default function ProductForm() {
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Product Type *</label>
-              <select 
+              <select
                 name="type"
                 value={formData.type}
                 onChange={handleChange}
@@ -239,7 +239,7 @@ export default function ProductForm() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Sales Price *</label>
-              <input 
+              <input
                 type="number"
                 step="0.01"
                 name="salePrice"
@@ -252,7 +252,7 @@ export default function ProductForm() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Cost Price *</label>
-              <input 
+              <input
                 type="number"
                 step="0.01"
                 name="costPrice"
@@ -267,19 +267,19 @@ export default function ProductForm() {
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Tax</label>
-              <input 
+              <input
                 type="text"
                 name="tax"
                 value={formData.tax}
                 onChange={handleChange}
-                className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20" 
+                className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
                 placeholder="e.g. 15%"
               />
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-              <textarea 
+              <textarea
                 name="notes"
                 value={formData.notes}
                 onChange={handleChange}
@@ -295,14 +295,14 @@ export default function ProductForm() {
         {!isNew && (
           <>
             <div className="flex gap-4 mb-4 border-b">
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={() => setActiveTab('recurring')}
                 className={`${tabBase} ${activeTab === 'recurring' ? tabActive : ''}`}
               >
                 Recurring Prices
               </button>
-              <button 
+              <button
                 type="button"
                 onClick={() => setActiveTab('variants')}
                 className={`${tabBase} ${activeTab === 'variants' ? tabActive : ''}`}
@@ -316,7 +316,7 @@ export default function ProductForm() {
               <div className="space-y-4 mb-8">
                 <div className="border rounded-xl p-4">
                   <h3 className="font-bold text-lg mb-4">Recurring Payment Modes</h3>
-                  
+
                   {/* Add New Recurring Price Form */}
                   <div className="bg-gray-50 p-4 rounded-lg mb-4 space-y-3">
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -324,7 +324,7 @@ export default function ProductForm() {
                         <label className="block text-xs font-medium text-gray-700 mb-1">Payment Mode</label>
                         <select
                           value={newRecurring.payment_mode}
-                          onChange={(e) => setNewRecurring({...newRecurring, payment_mode: e.target.value})}
+                          onChange={(e) => setNewRecurring({ ...newRecurring, payment_mode: e.target.value })}
                           className="w-full p-2 border rounded text-sm"
                         >
                           <option>EMI</option>
@@ -334,12 +334,12 @@ export default function ProductForm() {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">Amount ($)</label>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Amount (₹)</label>
                         <input
                           type="number"
                           step="0.01"
                           value={newRecurring.amount}
-                          onChange={(e) => setNewRecurring({...newRecurring, amount: e.target.value})}
+                          onChange={(e) => setNewRecurring({ ...newRecurring, amount: e.target.value })}
                           className="w-full p-2 border rounded text-sm"
                           placeholder="0.00"
                         />
@@ -348,7 +348,7 @@ export default function ProductForm() {
                         <label className="block text-xs font-medium text-gray-700 mb-1">Interval</label>
                         <select
                           value={newRecurring.interval}
-                          onChange={(e) => setNewRecurring({...newRecurring, interval: e.target.value})}
+                          onChange={(e) => setNewRecurring({ ...newRecurring, interval: e.target.value })}
                           className="w-full p-2 border rounded text-sm"
                         >
                           <option>Monthly</option>
@@ -361,7 +361,7 @@ export default function ProductForm() {
                         <input
                           type="number"
                           value={newRecurring.min_qty}
-                          onChange={(e) => setNewRecurring({...newRecurring, min_qty: e.target.value})}
+                          onChange={(e) => setNewRecurring({ ...newRecurring, min_qty: e.target.value })}
                           className="w-full p-2 border rounded text-sm"
                           placeholder="1"
                         />
@@ -371,7 +371,7 @@ export default function ProductForm() {
                         <input
                           type="date"
                           value={newRecurring.start_date}
-                          onChange={(e) => setNewRecurring({...newRecurring, start_date: e.target.value})}
+                          onChange={(e) => setNewRecurring({ ...newRecurring, start_date: e.target.value })}
                           className="w-full p-2 border rounded text-sm"
                         />
                       </div>
@@ -380,7 +380,7 @@ export default function ProductForm() {
                         <input
                           type="date"
                           value={newRecurring.end_date}
-                          onChange={(e) => setNewRecurring({...newRecurring, end_date: e.target.value})}
+                          onChange={(e) => setNewRecurring({ ...newRecurring, end_date: e.target.value })}
                           className="w-full p-2 border rounded text-sm"
                         />
                       </div>
@@ -415,7 +415,7 @@ export default function ProductForm() {
                         recurringPrices.map(rp => (
                           <tr key={rp.id} className="border-b hover:bg-gray-50">
                             <td className="p-3">{rp.payment_mode}</td>
-                            <td className="p-3">${parseFloat(rp.amount).toFixed(2)}</td>
+                            <td className="p-3">₹{parseFloat(rp.amount).toFixed(2)}</td>
                             <td className="p-3">{rp.interval}</td>
                             <td className="p-3">{rp.min_qty || '-'}</td>
                             <td className="p-3 text-xs">{rp.start_date ? new Date(rp.start_date).toLocaleDateString() : '-'} to {rp.end_date ? new Date(rp.end_date).toLocaleDateString() : '-'}</td>
@@ -441,7 +441,7 @@ export default function ProductForm() {
               <div className="space-y-4 mb-8">
                 <div className="border rounded-xl p-4">
                   <h3 className="font-bold text-lg mb-4">Product Variants</h3>
-                  
+
                   {/* Add New Variant Form */}
                   <div className="bg-gray-50 p-4 rounded-lg mb-4 space-y-3">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -450,7 +450,7 @@ export default function ProductForm() {
                         <input
                           type="text"
                           value={newVariant.name}
-                          onChange={(e) => setNewVariant({...newVariant, name: e.target.value})}
+                          onChange={(e) => setNewVariant({ ...newVariant, name: e.target.value })}
                           className="w-full p-2 border rounded text-sm"
                           placeholder="e.g. Red, Large"
                         />
@@ -460,18 +460,18 @@ export default function ProductForm() {
                         <input
                           type="text"
                           value={newVariant.description}
-                          onChange={(e) => setNewVariant({...newVariant, description: e.target.value})}
+                          onChange={(e) => setNewVariant({ ...newVariant, description: e.target.value })}
                           className="w-full p-2 border rounded text-sm"
                           placeholder="Optional description"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">Additional Price ($)</label>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Additional Price (₹)</label>
                         <input
                           type="number"
                           step="0.01"
                           value={newVariant.additional_price}
-                          onChange={(e) => setNewVariant({...newVariant, additional_price: e.target.value})}
+                          onChange={(e) => setNewVariant({ ...newVariant, additional_price: e.target.value })}
                           className="w-full p-2 border rounded text-sm"
                           placeholder="0.00"
                         />
@@ -506,7 +506,7 @@ export default function ProductForm() {
                           <tr key={v.id} className="border-b hover:bg-gray-50">
                             <td className="p-3 font-medium">{v.name}</td>
                             <td className="p-3 text-gray-600">{v.description || '-'}</td>
-                            <td className="p-3">${parseFloat(v.additional_price).toFixed(2)}</td>
+                            <td className="p-3">₹{parseFloat(v.additional_price).toFixed(2)}</td>
                             <td className="p-3">
                               <button
                                 onClick={() => handleDeleteVariant(v.id)}

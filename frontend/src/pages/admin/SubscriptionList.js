@@ -79,9 +79,11 @@ const SubscriptionList = () => {
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">Number</th>
                 <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">Customer</th>
-                <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">Plan</th>
+                <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">Plan / Variant</th>
+                <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">Cycle</th>
+                <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">Amount</th>
                 <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">Next Invoice</th>
+                <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">Next Billing</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -98,16 +100,29 @@ const SubscriptionList = () => {
                       }}
                       className="mr-2"
                     />
-                    <span onClick={() => navigate(`/app/subscriptions/${sub.id}`)} className="text-sm font-medium text-purple-600 cursor-pointer">{sub.subscription_number || `SUB/00${sub.id}`}</span>
+                    <span onClick={() => navigate(`/app/subscriptions/${sub.id}`)} className="text-sm font-medium text-purple-600 cursor-pointer">{sub.subscription_number || `SUB/${String(sub.id).padStart(3, '0')}`}</span>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-700">{sub.customer_name}</td>
-                  <td className="px-6 py-4 text-sm text-gray-700">{sub.plan_name}</td>
+                  <td className="px-6 py-4 text-sm text-gray-700">
+                    <div className="font-medium">{sub.plan_name || 'Unknown Plan'}</div>
+                    {sub.variant_name && <div className="text-xs text-gray-500">{sub.variant_name}</div>}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-700">{sub.billing_cycle}</td>
+                  <td className="px-6 py-4 text-sm text-gray-700">
+                    {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(sub.total_amount)}
+                  </td>
                   <td className="px-6 py-4">
-                    <span className={`px-2 py-1 text-xs font-bold rounded-full ${sub.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
-                      {sub.status}
+                    <span className={`px-2 py-1 text-xs font-bold rounded-full ${sub.status === 'confirmed' || sub.status === 'active' ? 'bg-green-100 text-green-700' :
+                        sub.status === 'cancelled' ? 'bg-red-100 text-red-700' :
+                          sub.status === 'quotation_sent' ? 'bg-blue-100 text-blue-700' :
+                            'bg-yellow-100 text-yellow-700' // draft
+                      }`}>
+                      {sub.status || 'Draft'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">{sub.next_invoice_date || 'N/A'}</td>
+                  <td className="px-6 py-4 text-sm text-gray-500">
+                    {sub.next_billing_date ? new Date(sub.next_billing_date).toLocaleDateString() : 'N/A'}
+                  </td>
                 </tr>
               ))}
             </tbody>

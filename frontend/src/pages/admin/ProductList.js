@@ -81,8 +81,8 @@ export default function ProductList() {
                   <tr key={p.id} className="hover:bg-gray-50 transition group">
                     <td className="p-4 font-medium text-primary">{p.name}</td>
                     <td className="p-4 text-gray-600">{p.type}</td>
-                    <td className="p-4 text-gray-800">${p.salePrice.toFixed(2)}</td>
-                    <td className="p-4 text-gray-500">${p.costPrice.toFixed(2)}</td>
+                    <td className="p-4 text-gray-800">₹{p.salePrice.toFixed(2)}</td>
+                    <td className="p-4 text-gray-500">₹{p.costPrice.toFixed(2)}</td>
                     <td className="p-4 text-gray-500 text-sm max-w-xs truncate">{p.notes}</td>
                     <td className="p-4 flex gap-3">
                       <button
@@ -103,7 +103,7 @@ export default function ProductList() {
                         }}
                         className="text-red-500 hover:text-red-700 text-sm font-medium hover:underline flex items-center gap-1"
                       >
-                         Delete
+                        Delete
                       </button>
                     </td>
                   </tr>

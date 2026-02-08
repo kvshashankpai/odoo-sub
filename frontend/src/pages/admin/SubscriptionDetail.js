@@ -5,7 +5,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 const SubscriptionDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  
+
   const [sub, setSub] = useState(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
@@ -214,7 +214,7 @@ const SubscriptionDetail = () => {
       // Calculate new start date (30 days from today or from current subscription end)
       const newStartDate = new Date();
       newStartDate.setDate(newStartDate.getDate() + 1);
-      
+
       const renewalPayload = {
         customer_name: sub.customer_name,
         billing_cycle: sub.billing_cycle,
@@ -283,7 +283,7 @@ const SubscriptionDetail = () => {
       }
 
       const newSub = data;
-      alert(`✅ Upsell subscription created! Amount increased to $${upsellAmount}`);
+      alert(`✅ Upsell subscription created! Amount increased to ₹${upsellAmount}`);
       setShowUpsellModal(false);
       await fetchSubscription();
       navigate(`/app/subscriptions/${newSub.id}`);
@@ -306,28 +306,27 @@ const SubscriptionDetail = () => {
           <h1 className="text-3xl font-bold text-gray-800">{sub.customer_name}</h1>
           <p className="text-gray-500">Subscription #{sub.id}</p>
         </div>
-        
+
         {/* STATUS BADGE */}
-        <div className={`px-4 py-2 rounded-full font-bold text-sm ${
-          sub.status === 'draft' ? 'bg-gray-100 text-gray-700' :
+        <div className={`px-4 py-2 rounded-full font-bold text-sm ${sub.status === 'draft' ? 'bg-gray-100 text-gray-700' :
           sub.status === 'quotation_sent' ? 'bg-blue-100 text-blue-700' :
-          sub.status === 'confirmed' ? 'bg-green-100 text-green-700' :
-          'bg-gray-100 text-gray-700'
-        }`}>
+            sub.status === 'confirmed' ? 'bg-green-100 text-green-700' :
+              'bg-gray-100 text-gray-700'
+          }`}>
           {(sub.status || '').toUpperCase()}
         </div>
       </div>
 
       {/* --- ACTION BAR (IMPROVED LAYOUT) --- */}
       {actionError && <div className="bg-red-100 text-red-700 p-3 rounded mb-4 border border-red-300">{actionError}</div>}
-      
+
       <div className="mb-8 bg-white p-6 rounded-lg shadow-sm border">
         <h2 className="text-lg font-semibold text-gray-800 mb-4">Actions</h2>
-        
+
         {/* STATE: DRAFT */}
         {sub.status === 'draft' && (
           <div className="flex flex-wrap gap-3">
-            <button 
+            <button
               onClick={handleSendQuote}
               disabled={actionLoading}
               className="bg-purple-600 text-white px-6 py-2 rounded hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition"
@@ -343,7 +342,7 @@ const SubscriptionDetail = () => {
             <button onClick={handlePreviewPdf} className="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 font-medium transition">
               📄 Preview PDF
             </button>
-            <button 
+            <button
               onClick={handleConfirm}
               disabled={actionLoading}
               className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition"
@@ -356,29 +355,29 @@ const SubscriptionDetail = () => {
         {/* STATE: CONFIRMED */}
         {sub.status === 'confirmed' && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <button 
+            <button
               onClick={handleCreateInvoice}
               disabled={actionLoading}
               className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition text-sm"
             >
               {actionLoading ? '⏳...' : '💰 Create Invoice'}
             </button>
-            
-            <button 
+
+            <button
               onClick={() => setShowRenewModal(true)}
               className="bg-green-100 text-green-700 border border-green-300 px-4 py-2 rounded hover:bg-green-200 font-medium transition text-sm"
             >
               🔄 Renew
             </button>
-            
-            <button 
+
+            <button
               onClick={() => setShowUpsellModal(true)}
               className="bg-yellow-100 text-yellow-700 border border-yellow-300 px-4 py-2 rounded hover:bg-yellow-200 font-medium transition text-sm"
             >
               📈 Upsell
             </button>
-            
-            <button 
+
+            <button
               onClick={handleCancelSubscription}
               disabled={actionLoading}
               className="bg-red-100 text-red-700 border border-red-300 px-4 py-2 rounded hover:bg-red-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition text-sm"
@@ -405,7 +404,7 @@ const SubscriptionDetail = () => {
         </div>
         <div>
           <h3 className="text-sm font-uppercase text-gray-500 mb-1">Total Amount</h3>
-          <p className="font-medium text-lg">${sub.total_amount}</p>
+          <p className="font-medium text-lg">₹{sub.total_amount}</p>
         </div>
         <div>
           <h3 className="text-sm font-uppercase text-gray-500 mb-1">Start Date</h3>
@@ -429,7 +428,7 @@ const SubscriptionDetail = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Current Amount</label>
-                <p className="text-gray-900">${sub.total_amount}</p>
+                <p className="text-gray-900">₹{sub.total_amount}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Billing Cycle</label>
@@ -442,13 +441,13 @@ const SubscriptionDetail = () => {
               </div>
             </div>
             <div className="flex gap-3">
-              <button 
+              <button
                 onClick={() => setShowRenewModal(false)}
                 className="flex-1 bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400 font-medium"
               >
                 Cancel
               </button>
-              <button 
+              <button
                 onClick={handleRenew}
                 disabled={renewLoading}
                 className="flex-1 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
@@ -472,11 +471,11 @@ const SubscriptionDetail = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Current Amount</label>
-                <p className="text-gray-900">${sub.total_amount}</p>
+                <p className="text-gray-900">₹{sub.total_amount}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Upsell Amount (30% increase)</label>
-                <p className="text-lg font-bold text-green-600">${Math.round(sub.total_amount * 1.3 * 100) / 100}</p>
+                <p className="text-lg font-bold text-green-600">₹{Math.round(sub.total_amount * 1.3 * 100) / 100}</p>
               </div>
               <div className="p-3 bg-yellow-50 border border-yellow-200 rounded">
                 <p className="text-sm text-yellow-700">
@@ -485,13 +484,13 @@ const SubscriptionDetail = () => {
               </div>
             </div>
             <div className="flex gap-3">
-              <button 
+              <button
                 onClick={() => setShowUpsellModal(false)}
                 className="flex-1 bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400 font-medium"
               >
                 Cancel
               </button>
-              <button 
+              <button
                 onClick={handleUpsell}
                 disabled={upsellLoading}
                 className="flex-1 bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"

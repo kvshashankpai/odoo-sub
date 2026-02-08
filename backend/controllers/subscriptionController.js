@@ -3,8 +3,14 @@ const db = require('../db');
 exports.getSubscriptions = async (req, res) => {
     try {
         const query = `
-            SELECT * FROM subscriptions 
-            ORDER BY created_at DESC
+            SELECT 
+                s.*,
+                p.name as plan_name,
+                v.name as variant_name
+            FROM subscriptions s
+            LEFT JOIN products p ON s.product_id = p.id
+            LEFT JOIN variants v ON s.variant_id = v.id
+            ORDER BY s.created_at DESC
         `;
         const result = await db.query(query);
         res.json(result.rows);
@@ -48,32 +54,32 @@ exports.createSubscription = async (req, res) => {
             return res.status(400).json({ error: "Customer Name is required" });
         }
 
-                // Check if columns exist and build insert accordingly
-                const colRes = await db.query("SELECT column_name FROM information_schema.columns WHERE table_name='subscriptions'");
-                const existingCols = colRes.rows.map(r => r.column_name);
+        // Check if columns exist and build insert accordingly
+        const colRes = await db.query("SELECT column_name FROM information_schema.columns WHERE table_name='subscriptions'");
+        const existingCols = colRes.rows.map(r => r.column_name);
 
-                const insertFields = ['customer_name','billing_cycle','start_date','total_amount','status'];
-                const values = [customer_name, billing_cycle || 'Monthly', start_date || null, total_amount || 0, 'draft'];
+        const insertFields = ['customer_name', 'billing_cycle', 'start_date', 'total_amount', 'status'];
+        const values = [customer_name, billing_cycle || 'Monthly', start_date || null, total_amount || 0, 'draft'];
 
-                if (existingCols.includes('parent_subscription_id') && parent_subscription_id) {
-                    insertFields.push('parent_subscription_id');
-                    values.push(parent_subscription_id);
-                }
+        if (existingCols.includes('parent_subscription_id') && parent_subscription_id) {
+            insertFields.push('parent_subscription_id');
+            values.push(parent_subscription_id);
+        }
 
-                if (existingCols.includes('variant_id') && variant_id) {
-                    insertFields.push('variant_id');
-                    values.push(variant_id);
-                }
+        if (existingCols.includes('variant_id') && variant_id) {
+            insertFields.push('variant_id');
+            values.push(variant_id);
+        }
 
-                // Add created_at if it exists in the table schema
-                if (existingCols.includes('created_at')) {
-                    insertFields.push('created_at');
-                    values.push(new Date().toISOString());
-                }
+        // Add created_at if it exists in the table schema
+        if (existingCols.includes('created_at')) {
+            insertFields.push('created_at');
+            values.push(new Date().toISOString());
+        }
 
-                const placeholders = insertFields.map((_, i) => `$${i+1}`);
-                const query = `INSERT INTO subscriptions (${insertFields.join(',')}) VALUES (${placeholders.join(',')}) RETURNING *`;
-                const result = await db.query(query, values);
+        const placeholders = insertFields.map((_, i) => `$${i + 1}`);
+        const query = `INSERT INTO subscriptions (${insertFields.join(',')}) VALUES (${placeholders.join(',')}) RETURNING *`;
+        const result = await db.query(query, values);
 
         res.status(201).json(result.rows[0]);
     } catch (err) {
@@ -124,9 +130,9 @@ exports.createFromCart = async (req, res) => {
                 values.push(new Date().toISOString());
             }
 
-            const placeholders = insertFields.map((_, i) => `$${i+1}`);
+            const placeholders = insertFields.map((_, i) => `$${i + 1}`);
             const query = `INSERT INTO subscriptions (${insertFields.join(',')}) VALUES (${placeholders.join(',')}) RETURNING *`;
-            
+
             const result = await db.query(query, values);
             createdSubscriptions.push(result.rows[0]);
         }
@@ -179,7 +185,7 @@ exports.updateStatus = async (req, res) => {
 
 exports.updateSubscription = async (req, res) => {
     const { id } = req.params;
-    const fields = ['customer_name','billing_cycle','start_date','total_amount','product_id','user_id','status'];
+    const fields = ['customer_name', 'billing_cycle', 'start_date', 'total_amount', 'product_id', 'user_id', 'status'];
     const setClauses = [];
     const values = [];
 
@@ -245,7 +251,7 @@ exports.deleteSubscription = async (req, res) => {
         await db.query('COMMIT');
         res.json({ success: true, deleted: delRes.rows[0] });
     } catch (err) {
-        try { await db.query('ROLLBACK'); } catch (e) {}
+        try { await db.query('ROLLBACK'); } catch (e) { }
         console.error('❌ deleteSubscription error:', err.message || err);
         res.status(500).json({ error: 'Internal Server Error' });
     }

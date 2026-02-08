@@ -43,7 +43,7 @@ export default function Reporting() {
         </div>
         <div className="bg-white p-6 rounded-lg shadow-sm border">
           <div className="text-gray-600 text-sm font-medium">Total Revenue</div>
-          <div className="text-3xl font-bold text-green-600 mt-2">${metrics.totalRevenue.toFixed(2)}</div>
+          <div className="text-3xl font-bold text-green-600 mt-2">₹{metrics.totalRevenue.toFixed(2)}</div>
         </div>
         <div className="bg-white p-6 rounded-lg shadow-sm border">
           <div className="text-gray-600 text-sm font-medium">Paid Invoices</div>

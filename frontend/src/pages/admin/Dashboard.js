@@ -10,13 +10,13 @@ export default function Dashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedIds, setSelectedIds] = useState([]);
 
-  const filteredData = subscriptions.filter(item => 
+  const filteredData = subscriptions.filter(item =>
     item.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.id.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const toggleSelect = (id) => {
-    setSelectedIds(prev => 
+    setSelectedIds(prev =>
       prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
     );
   };
@@ -53,7 +53,7 @@ export default function Dashboard() {
       {/* Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <MetricCard label="Active Subscriptions" value={metrics.activeSubscriptions} color="text-green-600" />
-        <MetricCard label="Total Revenue" value={`$${metrics.totalRevenue}`} color="text-blue-600" />
+        <MetricCard label="Total Revenue" value={`₹${metrics.totalRevenue}`} color="text-blue-600" />
         <MetricCard label="Paid Invoices" value={metrics.paidInvoices} color="text-purple-600" />
         <MetricCard label="Overdue Invoices" value={metrics.overdueInvoices} color="text-red-600" />
       </div>
@@ -96,7 +96,7 @@ export default function Dashboard() {
                   <td className="p-3"><input type="checkbox" checked={selectedIds.includes(row.id)} onChange={() => toggleSelect(row.id)} /></td>
                   <td className="p-3 font-medium text-primary cursor-pointer" onClick={() => navigate(`/app/subscriptions/${row.id}`)}>{row.id}</td>
                   <td className="p-3">{row.customer}</td>
-                  <td className="p-3">${row.amount}</td>
+                  <td className="p-3">₹{row.amount}</td>
                   <td className="p-3"><span className={`px-2 py-1 rounded text-xs font-semibold ${getStatusBadgeColor(row.status)}`}>{row.status}</span></td>
                   <td className="p-3">{row.startDate}</td>
                 </tr>

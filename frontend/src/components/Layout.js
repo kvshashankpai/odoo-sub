@@ -64,7 +64,6 @@ export default function Layout({ type = 'admin' }) {
       } catch (err) { }
     };
     window.addEventListener('notifications:updated', handler);
-    return () => clearInterval(t);
     return () => {
       clearInterval(t);
       window.removeEventListener('notifications:updated', handler);
