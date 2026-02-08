@@ -92,9 +92,13 @@ export default function ProductList() {
                         Edit
                       </button>
                       <button
-                        onClick={() => {
-                          if (window.confirm('Delete this product?')) {
-                            deleteProduct(p.id);
+                        onClick={async () => {
+                          if (!window.confirm('Delete this product?')) return;
+                          try {
+                            await deleteProduct(p.id);
+                            alert('Product deleted');
+                          } catch (err) {
+                            alert(err?.response?.data?.error || err.message || 'Failed to delete');
                           }
                         }}
                         className="text-red-500 hover:text-red-700 text-sm font-medium hover:underline flex items-center gap-1"

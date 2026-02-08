@@ -9,7 +9,7 @@ export default function ProductForm() {
   const { products, addProduct, updateProduct } = useData();
 
   // Logic: Determine if New or Edit
-  const product = products.find(p => p.id === id);
+  const product = id ? products.find(p => String(p.id) === String(id)) : undefined;
   const isNew = !product;
 
   // Logic: State Management
@@ -48,15 +48,20 @@ export default function ProductForm() {
       notes: formData.notes,
     };
 
-    if (isNew) {
-      addProduct(productData);
-      setMessage('Product created successfully!');
-      setTimeout(() => navigate('/app/products'), 1500);
-    } else {
-      updateProduct(id, productData);
-      setMessage('Product updated successfully!');
-      setTimeout(() => navigate('/app/products'), 1500);
-    }
+    (async () => {
+      try {
+        if (isNew) {
+          await addProduct(productData);
+          setMessage('Product created successfully!');
+        } else {
+          await updateProduct(id, productData);
+          setMessage('Product updated successfully!');
+        }
+        setTimeout(() => navigate('/app/products'), 1000);
+      } catch (err) {
+        setMessage(err?.response?.data?.error || err.message || 'Failed to save product');
+      }
+    })();
   };
 
   // Layout Styles

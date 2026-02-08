@@ -1,14 +1,37 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import api from '../api';
 
 const DataContext = createContext();
 
 export const DataProvider = ({ children }) => {
   // Products
-  const [products, setProducts] = useState([
-    { id: 1, name: 'Monthly Standard', type: 'Service', salePrice: 29, costPrice: 10, notes: '5 users' },
-    { id: 2, name: 'Monthly Pro', type: 'Service', salePrice: 99, costPrice: 30, notes: 'Unlimited users' },
-    { id: 3, name: 'Yearly Enterprise', type: 'Service', salePrice: 999, costPrice: 300, notes: 'Custom integrations' },
-  ]);
+  const [products, setProducts] = useState([]);
+
+  // Load products from backend on mount
+  useEffect(() => {
+    let mounted = true;
+    const fetchProducts = async () => {
+      try {
+        const res = await api.get('/products');
+        // Map backend product shape to frontend shape (salePrice/costPrice/notes)
+        const rows = res.data || [];
+        const mapped = rows.map(p => ({
+          id: p.id,
+          name: p.name,
+          type: p.type || 'Service',
+          salePrice: parseFloat(p.price || 0),
+          costPrice: parseFloat(p.cost || 0),
+          notes: p.description || '',
+          recurring: p.recurring || null,
+        }));
+        if (mounted) setProducts(mapped);
+      } catch (err) {
+        console.error('Failed to fetch products from backend', err?.response?.data || err.message);
+      }
+    };
+    fetchProducts();
+    return () => { mounted = false; };
+  }, []);
 
   // Subscriptions
   const [subscriptions, setSubscriptions] = useState([
@@ -41,18 +64,72 @@ export const DataProvider = ({ children }) => {
   ]);
 
   // Product CRUD
-  const addProduct = useCallback((product) => {
-    const newProduct = { ...product, id: Math.max(...products.map(p => p.id), 0) + 1 };
-    setProducts(prev => [...prev, newProduct]);
-    return newProduct;
-  }, [products]);
-
-  const updateProduct = useCallback((id, product) => {
-    setProducts(prev => prev.map(p => p.id === id ? { ...p, ...product } : p));
+  const addProduct = useCallback(async (product) => {
+    try {
+      const payload = {
+        name: product.name,
+        description: product.notes || null,
+        price: product.salePrice,
+        cost: product.costPrice,
+        type: product.type,
+        recurring: product.recurring || null,
+      };
+      const res = await api.post('/products', payload);
+      const created = res.data.product || res.data;
+      const mapped = {
+        id: created.id,
+        name: created.name,
+        type: created.type || 'Service',
+        salePrice: parseFloat(created.price || 0),
+        costPrice: parseFloat(created.cost || 0),
+        notes: created.description || '',
+        recurring: created.recurring || null,
+      };
+      setProducts(prev => [...prev, mapped]);
+      return mapped;
+    } catch (err) {
+      console.error('Failed to create product', err?.response?.data || err.message);
+      throw err;
+    }
   }, []);
 
-  const deleteProduct = useCallback((id) => {
-    setProducts(prev => prev.filter(p => p.id !== id));
+  const updateProduct = useCallback(async (id, product) => {
+    try {
+      const payload = {
+        name: product.name,
+        description: product.notes || null,
+        price: product.salePrice,
+        cost: product.costPrice,
+        type: product.type,
+        recurring: product.recurring || null,
+      };
+      const res = await api.put(`/products/${id}`, payload);
+      const updated = res.data.product || res.data;
+      const mapped = {
+        id: updated.id,
+        name: updated.name,
+        type: updated.type || 'Service',
+        salePrice: parseFloat(updated.price || 0),
+        costPrice: parseFloat(updated.cost || 0),
+        notes: updated.description || '',
+        recurring: updated.recurring || null,
+      };
+  setProducts(prev => prev.map(p => (String(p.id) === String(id) ? mapped : p)));
+      return mapped;
+    } catch (err) {
+      console.error('Failed to update product', err?.response?.data || err.message);
+      throw err;
+    }
+  }, []);
+
+  const deleteProduct = useCallback(async (id) => {
+    try {
+      await api.delete(`/products/${id}`);
+  setProducts(prev => prev.filter(p => String(p.id) !== String(id)));
+    } catch (err) {
+      console.error('Failed to delete product', err?.response?.data || err.message);
+      throw err;
+    }
   }, []);
 
   // Subscription CRUD & Lifecycle
