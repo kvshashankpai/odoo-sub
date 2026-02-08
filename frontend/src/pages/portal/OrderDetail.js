@@ -68,10 +68,15 @@ export default function OrderDetail() {
 
     setSavingSubscriptions(true);
     try {
+      // Logic: Extract billing cycle from the first item, or default to Monthly.
+      // Since the requirement says we don't need mixed cycles, this is sufficient.
+      const firstItem = lastOrder.items[0];
+      const selectedCycle = firstItem.billingCycle || 'Monthly';
+
       const response = await axios.post('http://localhost:5000/api/subscriptions/from-cart', {
         items: lastOrder.items,
         customer_name: 'Portal User', // In production, get from user auth
-        billing_cycle: 'Monthly',
+        billing_cycle: selectedCycle,
         start_date: new Date().toISOString().split('T')[0]
       });
 
@@ -144,9 +149,9 @@ export default function OrderDetail() {
               <p className="text-gray-500 mt-2">Date: {orderData.date}</p>
             </div>
             <div className="text-right">
-               <span className="bg-green-100 text-green-700 px-4 py-2 rounded text-sm font-bold border border-green-200">
-                 PAID / ACTIVE
-               </span>
+              <span className="bg-green-100 text-green-700 px-4 py-2 rounded text-sm font-bold border border-green-200">
+                PAID / ACTIVE
+              </span>
             </div>
           </div>
 

@@ -11,7 +11,7 @@ export default function Cart() {
     <div className="py-8">
       <div className="app-container max-w-4xl">
         <h1 className="text-2xl font-bold mb-6">Shopping Cart</h1>
-        
+
         <div className="flex flex-col md:flex-row gap-8">
           {/* Cart Items */}
           <div className="flex-1 bg-white rounded shadow-sm overflow-hidden border">
@@ -35,12 +35,15 @@ export default function Cart() {
                   const additional = parseFloat(it.additionalPrice) || 0;
                   const base = (typeof it.basePrice !== 'undefined') ? (parseFloat(it.basePrice) || 0) : (parseFloat(it.price) - additional) || 0;
                   const unitPrice = parseFloat(it.price) || base + additional;
+                  const cycle = it.billingCycle || 'Monthly';
+
                   return (
                     <tr key={compositeId} className="border-b hover:bg-gray-50 transition">
                       <td className="p-4">
                         <div className="font-bold text-gray-800">{it.name}</div>
                         <div className="text-sm text-gray-600">
                           <span className="block">Variant: <span className="font-medium">{it.variantName || 'Standard'}</span></span>
+                          <span className="block">Billing: <span className="font-medium">{cycle}</span></span>
                           {additional > 0 && (
                             <span className="block text-xs text-gray-500">Base: ${base.toFixed(2)} + Variant: ${additional.toFixed(2)}</span>
                           )}
@@ -49,7 +52,10 @@ export default function Cart() {
                       <td className="p-4 text-center">
                         <input type="number" value={it.qty} onChange={(e) => updateQty(compositeId, parseInt(e.target.value || '1', 10))} className="w-16 border rounded p-1 text-center" />
                       </td>
-                      <td className="p-4 text-right font-medium">${(unitPrice * (it.qty || 1)).toFixed(2)}</td>
+                      <td className="p-4 text-right font-medium">
+                        ${(unitPrice * (it.qty || 1)).toFixed(2)}
+                        <div className="text-xs text-gray-400">/{cycle.toLowerCase().slice(0, -2)}</div>
+                      </td>
                       <td className="p-4 text-center text-red-500 cursor-pointer hover:bg-red-50 rounded">
                         <button onClick={() => removeFromCart(compositeId)} aria-label="remove">
                           <Trash2 size={18} />
@@ -85,12 +91,12 @@ export default function Cart() {
               <span>Total</span>
               <span>${(Math.max(subtotal - discountAmount, 0) * 1.15).toFixed(2)}</span>
             </div>
-            <button 
+            <button
               onClick={() => {
                 if (items.length === 0) return;
                 const order = placeOrder();
                 navigate(`/portal/orders/${order.reference}`);
-              }} 
+              }}
               disabled={items.length === 0}
               className="w-full bg-primary text-white py-3 rounded flex items-center justify-center gap-2 hover:bg-opacity-90 transition disabled:opacity-60"
             >

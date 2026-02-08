@@ -21,38 +21,7 @@ export default function Shop() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {products.map((product, index) => (
-              <div key={product.id} className={`bg-white rounded-xl shadow-sm border flex flex-col relative ${index === 1 ? 'border-primary ring-2 ring-primary/20' : 'border-gray-200'}`}>
-                {index === 1 && (
-                  <span className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-primary text-white px-3 py-1 rounded-full text-xs font-bold tracking-wide">
-                    MOST POPULAR
-                  </span>
-                )}
-                <div className="p-6 text-center border-b border-gray-100">
-                  <h3 className="text-xl font-semibold text-gray-700">{product.name}</h3>
-                  <div className="mt-2 text-sm text-gray-500">{product.type}</div>
-                  <div className="mt-4 flex items-baseline justify-center">
-                    <span className="text-4xl font-extrabold text-gray-900">${product.salePrice}</span>
-                    <span className="ml-1 text-lg text-gray-500">/mo</span>
-                  </div>
-                </div>
-                <div className="p-6 flex-1">
-                  {product.notes ? (
-                    <ul className="space-y-3">
-                      {product.notes.split(',').map((feature, idx) => (
-                        <li key={idx} className="flex items-center">
-                          <Check size={18} className="text-green-500 mr-3 flex-shrink-0" />
-                          <span className="text-gray-600">{feature.trim()}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-gray-600 text-sm">{product.type} subscription plan</p>
-                  )}
-                </div>
-                <div className="p-6 bg-gray-50 rounded-b-xl">
-                  <AddToCartButton product={product} />
-                </div>
-              </div>
+              <ProductCard key={product.id} product={product} isPopular={index === 1} />
             ))}
           </div>
         )}
@@ -61,17 +30,82 @@ export default function Shop() {
   );
 }
 
-function AddToCartButton({ product }){
+function ProductCard({ product, isPopular }) {
+  const [billingCycle, setBillingCycle] = useState('Weekly');
+
+  const getMultiplier = (cycle) => {
+    switch (cycle) {
+      case 'Weekly': return 1;
+      case 'Monthly': return 4;
+      case 'Yearly': return 52;
+      default: return 1;
+    }
+  };
+
+  const basePricePerWeek = parseFloat(product.salePrice) || 0;
+  const currentPrice = basePricePerWeek * getMultiplier(billingCycle);
+
+  return (
+    <div className={`bg-white rounded-xl shadow-sm border flex flex-col relative ${isPopular ? 'border-primary ring-2 ring-primary/20' : 'border-gray-200'}`}>
+      {isPopular && (
+        <span className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-primary text-white px-3 py-1 rounded-full text-xs font-bold tracking-wide">
+          MOST POPULAR
+        </span>
+      )}
+      <div className="p-6 text-center border-b border-gray-100">
+        <h3 className="text-xl font-semibold text-gray-700">{product.name}</h3>
+        <div className="mt-2 text-sm text-gray-500">{product.type}</div>
+        
+        {/* Billing Cycle Selector */}
+        <div className="mt-4 flex justify-center bg-gray-100 rounded-lg p-1 mx-auto max-w-[240px]">
+          {['Weekly', 'Monthly', 'Yearly'].map((cycle) => (
+            <button
+              key={cycle}
+              onClick={() => setBillingCycle(cycle)}
+              className={`flex-1 text-xs font-semibold py-1.5 rounded-md transition-all ${
+                billingCycle === cycle
+                  ? 'bg-white text-gray-800 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              {cycle}
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-4 flex items-baseline justify-center">
+          <span className="text-4xl font-extrabold text-gray-900">${currentPrice.toFixed(2)}</span>
+          <span className="ml-1 text-lg text-gray-500">/{billingCycle.toLowerCase().slice(0, -2)}</span>
+        </div>
+      </div>
+      <div className="p-6 flex-1">
+        {product.notes ? (
+          <ul className="space-y-3">
+            {product.notes.split(',').map((feature, idx) => (
+              <li key={idx} className="flex items-center">
+                <Check size={18} className="text-green-500 mr-3 flex-shrink-0" />
+                <span className="text-gray-600">{feature.trim()}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-gray-600 text-sm">{product.type} subscription plan</p>
+        )}
+      </div>
+      <div className="p-6 bg-gray-50 rounded-b-xl">
+        <AddToCartButton product={product} billingCycle={billingCycle} currentPrice={currentPrice} />
+      </div>
+    </div>
+  );
+}
+
+function AddToCartButton({ product, billingCycle, currentPrice }){
   const { addToCart } = useCart();
   const navigate = useNavigate();
   const [showVariantModal, setShowVariantModal] = useState(false);
   const [variants, setVariants] = useState([]);
-  const [selectedVariant, setSelectedVariant] = useState(null);
-  const [loading, setLoading] = useState(false);
-
+  
   useEffect(() => {
-    // Fetch variants as soon as this product card mounts so the modal
-    // can open immediately when user clicks "Add to Cart".
     const fetchVariants = async () => {
       try {
         const res = await axios.get(`http://localhost:5000/api/variants/product/${product.id}`);
@@ -93,20 +127,36 @@ function AddToCartButton({ product }){
       addToCart({
         id: product.id,
         name: product.name,
-        price: product.salePrice,
+        price: currentPrice,
         variantId: null,
         variantName: 'Standard',
         additionalPrice: 0,
-        basePrice: product.salePrice
+        basePrice: currentPrice,
+        billingCycle: billingCycle // Pass selected cycle
       });
       navigate('/portal/cart');
     }
   };
 
+  const getMultiplier = (cycle) => {
+     switch (cycle) {
+      case 'Weekly': return 1;
+      case 'Monthly': return 4;
+      case 'Yearly': return 52;
+      default: return 1;
+    }
+  };
+  const multiplier = getMultiplier(billingCycle);
+
   const handleSelectVariant = (variant) => {
-    const additional = parseFloat(variant.additional_price) || 0;
-    const base = parseFloat(product.salePrice) || 0;
+    const additionalBase = parseFloat(variant.additional_price) || 0;
+    // Apply multiplier to additional price as well? Protocol is vague, but usually variants invoke extra cost per period.
+    const additional = additionalBase * multiplier; 
+    
+    // Recalculate base from currentPrice to be safe or use passed prop
+    const base = currentPrice;
     const totalPrice = base + additional;
+
     addToCart({
       id: product.id,
       name: product.name,
@@ -114,15 +164,15 @@ function AddToCartButton({ product }){
       variantId: variant.id,
       variantName: variant.name,
       additionalPrice: additional,
-      basePrice: base
+      basePrice: base,
+      billingCycle: billingCycle
     });
     setShowVariantModal(false);
-    setSelectedVariant(null);
     navigate('/portal/cart');
   };
 
   const handleSelectBase = () => {
-    const base = parseFloat(product.salePrice) || 0;
+    const base = currentPrice;
     addToCart({
       id: product.id,
       name: product.name,
@@ -130,10 +180,10 @@ function AddToCartButton({ product }){
       variantId: null,
       variantName: 'Standard',
       additionalPrice: 0,
-      basePrice: base
+      basePrice: base,
+      billingCycle: billingCycle
     });
     setShowVariantModal(false);
-    setSelectedVariant(null);
     navigate('/portal/cart');
   };
 
@@ -152,7 +202,9 @@ function AddToCartButton({ product }){
                 <X size={24} />
               </button>
             </div>
-            <p className="text-gray-600 mb-4">Choose a variant for <strong>{product.name}</strong></p>
+            <p className="text-gray-600 mb-4">
+              Choose a variant for <strong>{product.name}</strong> ({billingCycle})
+            </p>
             
             <div className="space-y-3 max-h-64 overflow-y-auto">
               {/* Standard/Base option */}
@@ -162,13 +214,15 @@ function AddToCartButton({ product }){
               >
                 <div className="font-semibold text-gray-800">Standard</div>
                 <div className="text-sm text-gray-600">Base product - No additional cost</div>
-                <div className="text-primary font-bold mt-1">${(parseFloat(product.salePrice) || 0).toFixed(2)}</div>
+                <div className="text-primary font-bold mt-1">${currentPrice.toFixed(2)}</div>
               </button>
 
               {/* Variant options */}
               {variants.map((variant) => {
-                const additional = parseFloat(variant.additional_price) || 0;
-                const base = parseFloat(product.salePrice) || 0;
+                const additionalBase = parseFloat(variant.additional_price) || 0;
+                const additional = additionalBase * multiplier;
+                const base = currentPrice;
+                
                 return (
                   <button
                     key={variant.id}
