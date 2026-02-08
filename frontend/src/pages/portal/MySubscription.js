@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Calendar, AlertCircle, Package, X } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
 
 export default function MySubscription() {
+  const { user } = useAuth();
   const [subscriptions, setSubscriptions] = useState([]);
   const [variants, setVariants] = useState({});
   const [products, setProducts] = useState({});
@@ -47,7 +49,12 @@ export default function MySubscription() {
     const fetchSubscriptions = async () => {
       try {
         const res = await axios.get('http://localhost:5000/api/subscriptions');
-        const subsData = res.data || [];
+        const allSubs = res.data || [];
+        // Filter by logged-in user's name if available
+        const subsData = user?.name
+          ? allSubs.filter(sub => sub.customer_name === user.name)
+          : allSubs;
+
         setSubscriptions(subsData);
 
         const variantIds = new Set();
@@ -98,7 +105,7 @@ export default function MySubscription() {
     };
 
     fetchSubscriptions();
-  }, []);
+  }, [user]);
 
   if (loading) {
     return (
@@ -154,7 +161,9 @@ export default function MySubscription() {
               <div className="flex justify-between items-start mb-6">
                 <div>
                   <div className="flex items-center gap-3 mb-2">
-                    <h2 className="text-2xl font-semibold text-gray-800">{sub.customer_name}</h2>
+                    <h2 className="text-2xl font-semibold text-gray-800">
+                      {products[sub.product_id]?.name || 'Unknown Product'}
+                    </h2>
                     <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${statusColors[sub.status] || 'bg-gray-100 text-gray-700'}`}>
                       {sub.status || 'Draft'}
                     </span>
