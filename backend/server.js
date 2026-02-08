@@ -12,6 +12,8 @@ const productRoutes = require('./routes/productRoutes');
 const discountRoutes = require('./routes/discountRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const notificationsRoutes = require('./routes/notificationsRoutes');
+const variantRoutes = require('./routes/variantRoutes');
+const recurringPriceRoutes = require('./routes/recurringPriceRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -34,6 +36,9 @@ app.use('/api/discounts', discountRoutes);
 app.use('/api/admin', adminRoutes);
 // Notifications
 app.use('/api/notifications', notificationsRoutes);
+// Variants & Recurring Prices
+app.use('/api/variants', variantRoutes);
+app.use('/api/recurring-prices', recurringPriceRoutes);
 
 // --- ERROR HANDLING ---
 app.use((err, req, res, next) => {
@@ -59,10 +64,46 @@ db.query('SELECT NOW()', (err, res) => {
       )
     `;
 
-    db.query(createNotifications, (createErr) => {
-      if (createErr) console.error('❌ Could not ensure notifications table:', createErr.stack || createErr);
-      app.listen(PORT, () => {
-        console.log(`🚀 Server running on http://localhost:${PORT}`);
+    // Ensure product_variants table exists
+    const createVariants = `
+      CREATE TABLE IF NOT EXISTS product_variants (
+        id SERIAL PRIMARY KEY,
+        product_id INTEGER NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        description TEXT,
+        additional_price NUMERIC(10, 2) DEFAULT 0,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `;
+
+    // Ensure recurring_prices table exists
+    const createRecurringPrices = `
+      CREATE TABLE IF NOT EXISTS recurring_prices (
+        id SERIAL PRIMARY KEY,
+        product_id INTEGER NOT NULL,
+        payment_mode VARCHAR(64) NOT NULL,
+        amount NUMERIC(10, 2) NOT NULL,
+        interval VARCHAR(64),
+        min_qty INTEGER,
+        start_date DATE,
+        end_date DATE,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `;
+
+    db.query(createNotifications, (createErr1) => {
+      if (createErr1) console.error('❌ Could not ensure notifications table:', createErr1.stack || createErr1);
+      
+      db.query(createVariants, (createErr2) => {
+        if (createErr2) console.error('❌ Could not ensure product_variants table:', createErr2.stack || createErr2);
+        
+        db.query(createRecurringPrices, (createErr3) => {
+          if (createErr3) console.error('❌ Could not ensure recurring_prices table:', createErr3.stack || createErr3);
+          
+          app.listen(PORT, () => {
+            console.log(`🚀 Server running on http://localhost:${PORT}`);
+          });
+        });
       });
     });
   }
