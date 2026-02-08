@@ -43,6 +43,7 @@ import Cart from './pages/portal/Cart.js';
 import MyOrders from './pages/portal/MyOrders.js';
 import OrderDetail from './pages/portal/OrderDetail.js';
 import MySubscription from './pages/portal/MySubscription.js';
+import PortalNotifications from './pages/portal/Notifications.js';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -116,6 +117,7 @@ export default function App() {
                 <Route path="orders" element={<MyOrders />} />
                 <Route path="orders/:id" element={<OrderDetail />} />
                 <Route path="subscription" element={<MySubscription />} />
+                <Route path="notifications" element={<PortalNotifications />} />
               </Route>
 
               {/* Default Route */}

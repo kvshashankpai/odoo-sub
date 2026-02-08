@@ -63,6 +63,7 @@ db.query('SELECT NOW()', (err, res) => {
       CREATE TABLE IF NOT EXISTS notifications (
         id SERIAL PRIMARY KEY,
         subscription_id INTEGER,
+        user_id INTEGER,
         type VARCHAR(64),
         message TEXT,
         is_read BOOLEAN DEFAULT false,
@@ -104,15 +105,53 @@ db.query('SELECT NOW()', (err, res) => {
 
       db.query(createNotifications, (createErr1) => {
         if (createErr1) console.error('❌ Could not ensure notifications table:', createErr1.stack || createErr1);
-        
-        db.query(createVariants, (createErr2) => {
-          if (createErr2) console.error('❌ Could not ensure product_variants table:', createErr2.stack || createErr2);
-          
-          db.query(createRecurringPrices, (createErr3) => {
-            if (createErr3) console.error('❌ Could not ensure recurring_prices table:', createErr3.stack || createErr3);
+
+        // Ensure user_id exists on notifications (for per-user notifications)
+        const addNotificationsUserCol = `ALTER TABLE notifications ADD COLUMN IF NOT EXISTS user_id INTEGER`;
+        db.query(addNotificationsUserCol, (addUserColErr) => {
+          if (addUserColErr) console.error('❌ Could not add user_id to notifications:', addUserColErr.stack || addUserColErr);
+
+          db.query(createVariants, (createErr2) => {
+            if (createErr2) console.error('❌ Could not ensure product_variants table:', createErr2.stack || createErr2);
             
-            app.listen(PORT, () => {
-              console.log(`🚀 Server running on http://localhost:${PORT}`);
+            db.query(createRecurringPrices, (createErr3) => {
+              if (createErr3) console.error('❌ Could not ensure recurring_prices table:', createErr3.stack || createErr3);
+              
+              app.listen(PORT, async () => {
+                console.log(`🚀 Server running on http://localhost:${PORT}`);
+
+                // Optional: in-process notification generator (lightweight, no extra deps)
+                try {
+                  const notificationsController = require('./controllers/notificationsController');
+                  const enableCron = process.env.ENABLE_NOTIFICATION_CRON === 'true';
+                  const intervalMs = Number(process.env.NOTIFICATION_CRON_INTERVAL_MS) || 24 * 60 * 60 * 1000; // default: 24h
+
+                  if (enableCron) {
+                    console.log('⏱️ Notification cron enabled. Interval (ms):', intervalMs);
+                    // run periodically
+                    setInterval(async () => {
+                      try {
+                        const generated = await notificationsController.generateNotificationsInternal();
+                        if (generated > 0) console.log(`🔔 Generated ${generated} scheduled notification(s)`);
+                      } catch (err) {
+                        console.error('❌ Scheduled generateNotifications failed:', err.stack || err.message);
+                      }
+                    }, intervalMs);
+
+                    // option: run once on startup if requested
+                    if (process.env.NOTIFICATION_CRON_RUN_ON_START === 'true') {
+                      try {
+                        const generated = await notificationsController.generateNotificationsInternal();
+                        if (generated > 0) console.log(`🔔 Generated ${generated} scheduled notification(s) on startup`);
+                      } catch (err) {
+                        console.error('❌ Startup generateNotifications failed:', err.stack || err.message);
+                      }
+                    }
+                  }
+                } catch (err) {
+                  console.error('⚠️ Could not setup notification cron:', err.stack || err.message);
+                }
+              });
             });
           });
         });

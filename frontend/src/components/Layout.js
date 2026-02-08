@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import api from '../api';
 import { 
   LayoutDashboard, ShoppingCart, FileText, Package, LogOut, 
   BarChart, Settings, ShoppingBag, CreditCard, Tag, Menu, Bell,
@@ -33,9 +34,43 @@ export default function Layout({ type = 'admin' }) {
     { path: '/portal/cart', label: 'Cart', icon: ShoppingCart },
     { path: '/portal/orders', label: 'My Orders', icon: FileText },
     { path: '/portal/subscription', label: 'My Subscription', icon: CreditCard },
+    { path: '/portal/notifications', label: 'Notifications', icon: Bell },
   ];
 
   const links = type === 'portal' ? portalLinks : adminLinks;
+
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (type !== 'portal') return;
+    // fetch user's unread notifications count
+    const fetchUnread = async () => {
+      try {
+        const res = await api.get('/notifications/user');
+        const rows = res.data || [];
+        const unread = rows.filter(r => !r.is_read).length;
+        setUnreadCount(unread);
+      } catch (err) {
+        // silently ignore; user may not be logged in
+      }
+    };
+    fetchUnread();
+    // optional: refresh every 60s while on portal
+    const t = setInterval(fetchUnread, 60000);
+    // listen for updates from other components when notifications change
+    const handler = (e) => {
+      try {
+        const u = e?.detail?.unread;
+        if (typeof u === 'number') setUnreadCount(u);
+      } catch (err) {}
+    };
+    window.addEventListener('notifications:updated', handler);
+    return () => clearInterval(t);
+    return () => {
+      clearInterval(t);
+      window.removeEventListener('notifications:updated', handler);
+    };
+  }, [type, user]);
 
   const handleLogout = () => {
     logout();
@@ -105,6 +140,9 @@ export default function Layout({ type = 'admin' }) {
                 {links.map((link) => (
                   <Link key={link.path} to={link.path} className={`px-3 py-2 rounded text-sm ${location.pathname === link.path ? 'bg-primary/10 text-primary font-semibold' : 'text-gray-600 hover:text-primary'}`}>
                     {link.label}
+                    {link.path === '/portal/notifications' && unreadCount > 0 && (
+                      <span className="ml-2 inline-flex items-center justify-center px-2 py-0.5 text-xs font-medium text-white bg-red-600 rounded-full">{unreadCount}</span>
+                    )}
                   </Link>
                 ))}
               </nav>
