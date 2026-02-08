@@ -52,12 +52,18 @@ exports.createSubscription = async (req, res) => {
                 const colRes = await db.query("SELECT column_name FROM information_schema.columns WHERE table_name='subscriptions'");
                 const existingCols = colRes.rows.map(r => r.column_name);
 
-                const insertFields = ['customer_name','billing_cycle','start_date','total_amount','status','created_at'];
+                const insertFields = ['customer_name','billing_cycle','start_date','total_amount','status'];
                 const values = [customer_name, billing_cycle || 'Monthly', start_date || null, total_amount || 0, 'draft'];
 
                 if (existingCols.includes('parent_subscription_id') && parent_subscription_id) {
-                    insertFields.splice(4, 0, 'parent_subscription_id'); // insert before status
-                    values.splice(4, 0, parent_subscription_id);
+                    insertFields.push('parent_subscription_id');
+                    values.push(parent_subscription_id);
+                }
+
+                // Add created_at if it exists in the table schema
+                if (existingCols.includes('created_at')) {
+                    insertFields.push('created_at');
+                    values.push(new Date().toISOString());
                 }
 
                 const placeholders = insertFields.map((_, i) => `$${i+1}`);
