@@ -53,7 +53,7 @@ export default function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="bg-white p-8 rounded shadow-lg w-96">
-        <h1 className="text-3xl font-bold text-primary mb-2 text-center">Odoo</h1>
+        <h1 className="text-3xl font-bold text-primary mb-2 text-center">SubFlow</h1>
         <p className="text-gray-500 text-center mb-8">Subscription Management</p>
         
         {/* Error Message UI Added */}

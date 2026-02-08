@@ -4,7 +4,7 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: '#714B67', // Odoo purple
+        primary: '#714B67', // SubFlow purple
         secondary: '#017E84', // Teal
       }
     },
