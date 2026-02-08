@@ -8,31 +8,44 @@ export default function MySubscription() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Robust Currency Formatter
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(amount || 0);
+  };
+
   useEffect(() => {
     const fetchSubscriptions = async () => {
       try {
         const res = await axios.get('http://localhost:5000/api/subscriptions');
-        setSubscriptions(res.data || []);
-        
-        // Fetch variant info for subscriptions that have variant_id
+        const subsData = res.data || [];
+        setSubscriptions(subsData);
+
         const variantIds = new Set();
-        res.data.forEach(sub => {
-          if (sub.variant_id) {
-            variantIds.add(sub.variant_id);
-          }
+        subsData.forEach(sub => {
+          if (sub.variant_id) variantIds.add(sub.variant_id);
         });
 
-        // Fetch all variants to build a map
         if (variantIds.size > 0) {
           const variantMap = {};
-          // Fetch variants for all products
           const productsRes = await axios.get('http://localhost:5000/api/products');
-          for (const product of (productsRes.data || [])) {
-            const variantRes = await axios.get(`http://localhost:5000/api/variants/product/${product.id}`);
-            (variantRes.data || []).forEach(variant => {
-              variantMap[variant.id] = variant;
-            });
-          }
+          const products = productsRes.data || [];
+
+          // Optimized: Fetch all variants in parallel instead of one-by-one
+          await Promise.all(
+            products.map(async (product) => {
+              try {
+                const variantRes = await axios.get(`http://localhost:5000/api/variants/product/${product.id}`);
+                (variantRes.data || []).forEach(variant => {
+                  variantMap[variant.id] = variant;
+                });
+              } catch (e) {
+                console.warn(`Could not fetch variants for product ${product.id}`);
+              }
+            })
+          );
           setVariants(variantMap);
         }
       } catch (err) {
@@ -116,7 +129,10 @@ export default function MySubscription() {
                   )}
                 </div>
                 <div className="text-right">
-                  <p className="text-3xl font-extrabold text-primary">${(sub.total_amount || 0).toFixed(2)}</p>
+                  {/* Robust Fix Applied Here */}
+                  <p className="text-3xl font-extrabold text-primary">
+                    {formatCurrency(sub.total_amount)}
+                  </p>
                   <p className="text-sm text-gray-500">{sub.billing_cycle || 'Monthly'}</p>
                 </div>
               </div>
