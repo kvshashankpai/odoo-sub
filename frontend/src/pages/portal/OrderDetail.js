@@ -3,15 +3,20 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Printer, Download } from 'lucide-react';
 import axios from 'axios';
 import { useCart } from '../../context/CartContext';
+import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
 import { generateInvoicePDF } from '../../utils/pdfGenerator';
 
 export default function OrderDetail() {
   const navigate = useNavigate();
   const { lastOrder } = useCart();
+  const { user } = useAuth();
   const { products, taxConfig } = useData();
   const [savingSubscriptions, setSavingSubscriptions] = useState(false);
   const [message, setMessage] = useState(null);
+
+  const customerName = user?.name || 'Portal User';
+  const customerEmail = user?.email || 'user@example.com';
 
   // Enrich cart items with product details and calculate totals
   const orderData = useMemo(() => {
@@ -52,7 +57,7 @@ export default function OrderDetail() {
       console.error('No order data to download');
       return;
     }
-    const customer = { name: 'Portal User', email: 'user@example.com', company: '' };
+    const customer = { name: customerName, email: customerEmail, company: '' };
     try {
       await generateInvoicePDF(orderData.reference, customer, orderData.items, orderData.subtotal, orderData.tax, orderData.total, { preview: false, discount: orderData.discount, taxLabel: orderData.taxRate });
     } catch (err) {
@@ -75,7 +80,7 @@ export default function OrderDetail() {
 
       const response = await axios.post('http://localhost:5000/api/subscriptions/from-cart', {
         items: lastOrder.items,
-        customer_name: 'Portal User', // In production, get from user auth
+        customer_name: customerName,
         billing_cycle: selectedCycle,
         start_date: new Date().toISOString().split('T')[0]
       });
@@ -87,7 +92,7 @@ export default function OrderDetail() {
 
       // Redirect to subscriptions list after 2 seconds
       setTimeout(() => {
-        navigate('/portal/my-subscriptions');
+        navigate('/portal/subscription');
       }, 2000);
     } catch (err) {
       console.error('Failed to save subscriptions:', err);
@@ -160,8 +165,8 @@ export default function OrderDetail() {
             <div>
               <h3 className="text-xs uppercase tracking-wider font-bold text-gray-400 mb-3">Invoicing & Shipping Address</h3>
               <div className="text-gray-700 leading-relaxed">
-                <p className="font-bold text-black">Portal User</p>
-                <p>Contact: user@example.com</p>
+                <p className="font-bold text-black">{customerName}</p>
+                <p>Contact: {customerEmail}</p>
               </div>
             </div>
             <div>

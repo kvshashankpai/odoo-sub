@@ -4,9 +4,10 @@ async function testSubscriptionFlow() {
     try {
         console.log('Testing Subscription Creation from Cart...');
 
+        const testName = 'Dynamic User Test ' + Date.now();
         const payload = {
-            customer_name: 'Test Setup User',
-            billing_cycle: 'Yearly', // Verify this is respected
+            customer_name: testName,
+            billing_cycle: 'Yearly',
             start_date: new Date().toISOString().split('T')[0],
             items: [
                 {
@@ -26,10 +27,20 @@ async function testSubscriptionFlow() {
 
         if (res.data.success && res.data.count > 0) {
             const sub = res.data.subscriptions[0];
-            if (sub.billing_cycle === 'Yearly') {
-                console.log('✅ SUCCESS: Subscription created with correct billing cycle (Yearly)');
-            } else {
+            let success = true;
+
+            if (sub.billing_cycle !== 'Yearly') {
                 console.error(`❌ FAILURE: Expected Yearly, got ${sub.billing_cycle}`);
+                success = false;
+            }
+
+            if (sub.customer_name !== testName) {
+                console.error(`❌ FAILURE: Expected customer_name '${testName}', got '${sub.customer_name}'`);
+                success = false;
+            }
+
+            if (success) {
+                console.log('✅ SUCCESS: Subscription created with correct billing cycle and customer name');
             }
         } else {
             console.error('❌ FAILURE: No subscriptions created');
