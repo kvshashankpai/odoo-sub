@@ -6,6 +6,9 @@ import { AuthProvider, useAuth } from './context/AuthContext.js';
 import { CartProvider } from './context/CartContext.js';
 import { DataProvider } from './context/DataContext.js';
 
+// Landing Page
+import LandingPage from './pages/LandingPage.js';
+
 // Auth Pages
 import Login from './pages/auth/Login.js';
 import Signup from './pages/auth/Signup.js';
@@ -113,11 +116,11 @@ export default function App() {
                 <Route path="subscription" element={<MySubscription />} />
               </Route>
 
-              {/* Default Redirect */}
-              <Route path="/" element={<Navigate to="/login" />} />
+              {/* Default Route */}
+              <Route path="/" element={<LandingPage />} />
               
               {/* Catch all for 404 (Optional but recommended) */}
-              <Route path="*" element={<Navigate to="/login" />} />
+              <Route path="*" element={<Navigate to="/" />} />
             </Routes>
           </Router>
         </CartProvider>
