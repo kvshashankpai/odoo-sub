@@ -24,7 +24,7 @@ export async function generateInvoicePDF(reference, customer, items, subtotal, t
           <div style="text-align:right;color:#333">
             <div><strong>Invoice #:</strong> ${reference || ''}</div>
             <div><strong>Issue Date:</strong> ${new Date().toLocaleDateString()}</div>
-            <div><strong>Due Date:</strong> ${new Date(Date.now() + 30*24*60*60*1000).toLocaleDateString()}</div>
+            <div><strong>Due Date:</strong> ${new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString()}</div>
           </div>
         </div>
 
@@ -39,18 +39,18 @@ export async function generateInvoicePDF(reference, customer, items, subtotal, t
           </thead>
           <tbody>
             ${items.map(it => {
-              const qty = parseInt(it.qty || it.quantity || 1, 10) || 1;
-              const unit = parseFloat(it.salePrice || it.price) || 0;
-              const additional = parseFloat(it.additionalPrice) || 0;
-              const base = (typeof it.basePrice !== 'undefined') ? (parseFloat(it.basePrice) || 0) : Math.max(unit - additional, 0);
-              const unitDisplay = unit.toFixed(2);
-              const amount = (unit * qty).toFixed(2);
-              const productLabel = `${it.name || it.title || 'Item'}${it.variantName ? ' — ' + it.variantName : ''}`;
+      const qty = parseInt(it.qty || it.quantity || 1, 10) || 1;
+      const unit = parseFloat(it.salePrice || it.price) || 0;
+      const additional = parseFloat(it.additionalPrice) || 0;
+      const base = (typeof it.basePrice !== 'undefined') ? (parseFloat(it.basePrice) || 0) : Math.max(unit - additional, 0);
+      const unitDisplay = unit.toFixed(2);
+      const amount = (unit * qty).toFixed(2);
+      const productLabel = `${it.name || it.title || 'Item'}${it.variantName ? ' — ' + it.variantName : ''}`;
 
-              // Show base + variant breakdown when available
-              const breakdown = additional > 0 ? `<div style="color:#666;font-size:12px;margin-top:4px">Base: $${base.toFixed(2)} &nbsp; | &nbsp; Variant: $${additional.toFixed(2)}</div>` : '';
+      // Show base + variant breakdown when available
+      const breakdown = additional > 0 ? `<div style="color:#666;font-size:12px;margin-top:4px">Base: ₹${base.toFixed(2)} &nbsp; | &nbsp; Variant: ₹${additional.toFixed(2)}</div>` : '';
 
-              return `
+      return `
                 <tr>
                   <td style="padding:8px;border:1px solid #e1e1e1">
                     <div style="font-weight:600">${productLabel}</div>
@@ -58,25 +58,25 @@ export async function generateInvoicePDF(reference, customer, items, subtotal, t
                     ${breakdown}
                   </td>
                   <td style="padding:8px;border:1px solid #e1e1e1;text-align:center">${qty}</td>
-                  <td style="padding:8px;border:1px solid #e1e1e1;text-align:right">$${unitDisplay}</td>
-                  <td style="padding:8px;border:1px solid #e1e1e1;text-align:right">$${amount}</td>
+                  <td style="padding:8px;border:1px solid #e1e1e1;text-align:right">₹${unitDisplay}</td>
+                  <td style="padding:8px;border:1px solid #e1e1e1;text-align:right">₹${amount}</td>
                 </tr>
               `;
-            }).join('')}
+    }).join('')}
           </tbody>
         </table>
 
         <div style="display:flex;justify-content:flex-end">
           <div style="width:320px">
             <div style="display:flex;justify-content:space-between;padding:6px 0;border-top:1px solid #eaeaea">
-              <div>Subtotal</div><div>$${(subtotal||0).toFixed(2)}</div>
+              <div>Subtotal</div><div>₹${(subtotal || 0).toFixed(2)}</div>
             </div>
-            ${opts.discount && opts.discount > 0 ? `<div style="display:flex;justify-content:space-between;padding:6px 0"><div>Discount</div><div>-$${(opts.discount||0).toFixed(2)}</div></div>` : ''}
+            ${opts.discount && opts.discount > 0 ? `<div style="display:flex;justify-content:space-between;padding:6px 0"><div>Discount</div><div>-₹${(opts.discount || 0).toFixed(2)}</div></div>` : ''}
             <div style="display:flex;justify-content:space-between;padding:6px 0">
-              <div>${opts.taxLabel || 'Tax'}</div><div>$${(tax||0).toFixed(2)}</div>
+              <div>${opts.taxLabel || 'Tax'}</div><div>₹${(tax || 0).toFixed(2)}</div>
             </div>
             <div style="display:flex;justify-content:space-between;padding:10px 0;font-weight:700">
-              <div>Total</div><div>$${(total||0).toFixed(2)}</div>
+              <div>Total</div><div>₹${(total || 0).toFixed(2)}</div>
             </div>
           </div>
         </div>

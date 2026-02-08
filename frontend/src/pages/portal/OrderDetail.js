@@ -198,8 +198,8 @@ export default function OrderDetail() {
                     </td>
                     <td className="py-4 text-center text-sm">{item.variantName || 'Standard'}</td>
                     <td className="py-4 text-center">{item.qty || 1}</td>
-                    <td className="py-4 text-right">${(item.salePrice || item.price).toFixed(2)}</td>
-                    <td className="py-4 text-right font-medium">${((item.salePrice || item.price) * (item.qty || 1)).toFixed(2)}</td>
+                    <td className="py-4 text-right">₹{(item.salePrice || item.price).toFixed(2)}</td>
+                    <td className="py-4 text-right font-medium">₹{((item.salePrice || item.price) * (item.qty || 1)).toFixed(2)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -211,15 +211,15 @@ export default function OrderDetail() {
             <div className="w-64 space-y-3">
               <div className="flex justify-between text-gray-600">
                 <span>Subtotal</span>
-                <span>${orderData.subtotal.toFixed(2)}</span>
+                <span>₹{orderData.subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-gray-600 border-b pb-3">
                 <span>Tax ({orderData.taxRate})</span>
-                <span>${orderData.tax.toFixed(2)}</span>
+                <span>₹{orderData.tax.toFixed(2)}</span>
               </div>
               <div className="flex justify-between font-extrabold text-xl text-gray-900">
                 <span>Total</span>
-                <span>${orderData.total.toFixed(2)}</span>
+                <span>₹{orderData.total.toFixed(2)}</span>
               </div>
             </div>
           </div>

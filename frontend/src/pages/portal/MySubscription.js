@@ -12,7 +12,7 @@ export default function MySubscription() {
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'INR',
     }).format(amount || 0);
   };
 
@@ -98,7 +98,7 @@ export default function MySubscription() {
     <div className="py-8">
       <div className="app-container max-w-5xl">
         <h1 className="text-2xl font-bold mb-6">My Subscriptions</h1>
-        
+
         {subscriptions.map((sub) => {
           const variant = sub.variant_id ? variants[sub.variant_id] : null;
           const statusColors = {
@@ -166,7 +166,7 @@ export default function MySubscription() {
                   </div>
                 </div>
               </div>
-              
+
               <div className="mt-8 flex gap-4">
                 <button className="text-sm text-primary hover:underline font-medium">View Details</button>
                 <button className="text-sm text-red-500 hover:underline font-medium">Cancel</button>

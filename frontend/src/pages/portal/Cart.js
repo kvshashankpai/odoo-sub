@@ -45,7 +45,7 @@ export default function Cart() {
                           <span className="block">Variant: <span className="font-medium">{it.variantName || 'Standard'}</span></span>
                           <span className="block">Billing: <span className="font-medium">{cycle}</span></span>
                           {additional > 0 && (
-                            <span className="block text-xs text-gray-500">Base: ${base.toFixed(2)} + Variant: ${additional.toFixed(2)}</span>
+                            <span className="block text-xs text-gray-500">Base: ₹{base.toFixed(2)} + Variant: ₹{additional.toFixed(2)}</span>
                           )}
                         </div>
                       </td>
@@ -53,7 +53,7 @@ export default function Cart() {
                         <input type="number" value={it.qty} onChange={(e) => updateQty(compositeId, parseInt(e.target.value || '1', 10))} className="w-16 border rounded p-1 text-center" />
                       </td>
                       <td className="p-4 text-right font-medium">
-                        ${(unitPrice * (it.qty || 1)).toFixed(2)}
+                        ₹{(unitPrice * (it.qty || 1)).toFixed(2)}
                         <div className="text-xs text-gray-400">/{cycle.toLowerCase().slice(0, -2)}</div>
                       </td>
                       <td className="p-4 text-center text-red-500 cursor-pointer hover:bg-red-50 rounded">
@@ -74,22 +74,22 @@ export default function Cart() {
             <div className="space-y-3 border-b pb-4 mb-4 text-sm text-gray-600">
               <div className="flex justify-between">
                 <span>Subtotal</span>
-                <span>${subtotal.toFixed(2)}</span>
+                <span>₹{subtotal.toFixed(2)}</span>
               </div>
               {discountAmount > 0 && (
                 <div className="flex justify-between text-green-700">
                   <span>Discount</span>
-                  <span>- ${discountAmount.toFixed(2)}</span>
+                  <span>- ₹{discountAmount.toFixed(2)}</span>
                 </div>
               )}
               <div className="flex justify-between">
                 <span>Taxes (15%)</span>
-                <span>${(Math.max(subtotal - discountAmount, 0) * 0.15).toFixed(2)}</span>
+                <span>₹{(Math.max(subtotal - discountAmount, 0) * 0.15).toFixed(2)}</span>
               </div>
             </div>
             <div className="flex justify-between font-bold text-xl mb-6">
               <span>Total</span>
-              <span>${(Math.max(subtotal - discountAmount, 0) * 1.15).toFixed(2)}</span>
+              <span>₹{(Math.max(subtotal - discountAmount, 0) * 1.15).toFixed(2)}</span>
             </div>
             <button
               onClick={() => {

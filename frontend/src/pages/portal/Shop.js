@@ -13,7 +13,7 @@ export default function Shop() {
     <div className="py-8">
       <div className="app-container">
         <h1 className="text-3xl font-extrabold text-center mb-10 text-gray-800">Choose Your Plan</h1>
-        
+
         {products.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-gray-600 text-lg">No products available at the moment. Please check back later.</p>
@@ -55,18 +55,17 @@ function ProductCard({ product, isPopular }) {
       <div className="p-6 text-center border-b border-gray-100">
         <h3 className="text-xl font-semibold text-gray-700">{product.name}</h3>
         <div className="mt-2 text-sm text-gray-500">{product.type}</div>
-        
+
         {/* Billing Cycle Selector */}
         <div className="mt-4 flex justify-center bg-gray-100 rounded-lg p-1 mx-auto max-w-[240px]">
           {['Weekly', 'Monthly', 'Yearly'].map((cycle) => (
             <button
               key={cycle}
               onClick={() => setBillingCycle(cycle)}
-              className={`flex-1 text-xs font-semibold py-1.5 rounded-md transition-all ${
-                billingCycle === cycle
+              className={`flex-1 text-xs font-semibold py-1.5 rounded-md transition-all ${billingCycle === cycle
                   ? 'bg-white text-gray-800 shadow-sm'
                   : 'text-gray-500 hover:text-gray-700'
-              }`}
+                }`}
             >
               {cycle}
             </button>
@@ -74,7 +73,7 @@ function ProductCard({ product, isPopular }) {
         </div>
 
         <div className="mt-4 flex items-baseline justify-center">
-          <span className="text-4xl font-extrabold text-gray-900">${currentPrice.toFixed(2)}</span>
+          <span className="text-4xl font-extrabold text-gray-900">₹{currentPrice.toFixed(2)}</span>
           <span className="ml-1 text-lg text-gray-500">/{billingCycle.toLowerCase().slice(0, -2)}</span>
         </div>
       </div>
@@ -99,12 +98,12 @@ function ProductCard({ product, isPopular }) {
   );
 }
 
-function AddToCartButton({ product, billingCycle, currentPrice }){
+function AddToCartButton({ product, billingCycle, currentPrice }) {
   const { addToCart } = useCart();
   const navigate = useNavigate();
   const [showVariantModal, setShowVariantModal] = useState(false);
   const [variants, setVariants] = useState([]);
-  
+
   useEffect(() => {
     const fetchVariants = async () => {
       try {
@@ -139,7 +138,7 @@ function AddToCartButton({ product, billingCycle, currentPrice }){
   };
 
   const getMultiplier = (cycle) => {
-     switch (cycle) {
+    switch (cycle) {
       case 'Weekly': return 1;
       case 'Monthly': return 4;
       case 'Yearly': return 52;
@@ -151,8 +150,8 @@ function AddToCartButton({ product, billingCycle, currentPrice }){
   const handleSelectVariant = (variant) => {
     const additionalBase = parseFloat(variant.additional_price) || 0;
     // Apply multiplier to additional price as well? Protocol is vague, but usually variants invoke extra cost per period.
-    const additional = additionalBase * multiplier; 
-    
+    const additional = additionalBase * multiplier;
+
     // Recalculate base from currentPrice to be safe or use passed prop
     const base = currentPrice;
     const totalPrice = base + additional;
@@ -205,7 +204,7 @@ function AddToCartButton({ product, billingCycle, currentPrice }){
             <p className="text-gray-600 mb-4">
               Choose a variant for <strong>{product.name}</strong> ({billingCycle})
             </p>
-            
+
             <div className="space-y-3 max-h-64 overflow-y-auto">
               {/* Standard/Base option */}
               <button
@@ -214,7 +213,7 @@ function AddToCartButton({ product, billingCycle, currentPrice }){
               >
                 <div className="font-semibold text-gray-800">Standard</div>
                 <div className="text-sm text-gray-600">Base product - No additional cost</div>
-                <div className="text-primary font-bold mt-1">${currentPrice.toFixed(2)}</div>
+                <div className="text-primary font-bold mt-1">₹{currentPrice.toFixed(2)}</div>
               </button>
 
               {/* Variant options */}
@@ -222,7 +221,7 @@ function AddToCartButton({ product, billingCycle, currentPrice }){
                 const additionalBase = parseFloat(variant.additional_price) || 0;
                 const additional = additionalBase * multiplier;
                 const base = currentPrice;
-                
+
                 return (
                   <button
                     key={variant.id}
@@ -232,9 +231,9 @@ function AddToCartButton({ product, billingCycle, currentPrice }){
                     <div className="font-semibold text-gray-800">{variant.name}</div>
                     {variant.description && <div className="text-sm text-gray-600">{variant.description}</div>}
                     <div className="text-primary font-bold mt-1">
-                      ${(base + additional).toFixed(2)}
+                      ₹{(base + additional).toFixed(2)}
                       {additional > 0 && (
-                        <span className="text-xs text-gray-600 ml-2">(+${additional.toFixed(2)})</span>
+                        <span className="text-xs text-gray-600 ml-2">(+₹{additional.toFixed(2)})</span>
                       )}
                     </div>
                   </button>
