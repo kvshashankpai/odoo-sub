@@ -31,10 +31,15 @@ exports.getProductById = async (req, res) => {
 // 3. CREATE PRODUCT
 exports.createProduct = async (req, res) => {
     try {
-        const { name, description, price, cost, type, recurring } = req.body;
+        let { name, description, price, cost, type, recurring, salePrice, costPrice, notes } = req.body;
+
+        // Map frontend fields to backend fields
+        if (price === undefined && salePrice !== undefined) price = salePrice;
+        if (cost === undefined && costPrice !== undefined) cost = costPrice;
+        if (description === undefined && notes !== undefined) description = notes;
 
         // Validate required fields
-        if (!name || !price) {
+        if (!name || price === undefined || price === null || price === '') {
             return res.status(400).json({ error: "Name and price are required" });
         }
 
@@ -61,7 +66,12 @@ exports.createProduct = async (req, res) => {
 exports.updateProduct = async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, description, price, cost, type, recurring } = req.body;
+        let { name, description, price, cost, type, recurring, salePrice, costPrice, notes } = req.body;
+
+        // Map frontend fields to backend fields
+        if (price === undefined && salePrice !== undefined) price = salePrice;
+        if (cost === undefined && costPrice !== undefined) cost = costPrice;
+        if (description === undefined && notes !== undefined) description = notes;
 
         // Check if product exists
         const existingProduct = await db.query('SELECT * FROM products WHERE id = $1', [id]);
@@ -72,9 +82,15 @@ exports.updateProduct = async (req, res) => {
         // Update product
         const result = await db.query(
             'UPDATE products SET name = $1, description = $2, price = $3, cost = $4, type = $5, recurring = $6 WHERE id = $7 RETURNING *',
-            [name || existingProduct.rows[0].name, description !== undefined ? description : existingProduct.rows[0].description, 
-             price || existingProduct.rows[0].price, cost !== undefined ? cost : existingProduct.rows[0].cost, 
-             type || existingProduct.rows[0].type, recurring || existingProduct.rows[0].recurring, id]
+            [
+                name || existingProduct.rows[0].name,
+                description !== undefined ? description : existingProduct.rows[0].description,
+                price !== undefined ? price : existingProduct.rows[0].price,
+                cost !== undefined ? cost : existingProduct.rows[0].cost,
+                type || existingProduct.rows[0].type,
+                recurring || existingProduct.rows[0].recurring,
+                id
+            ]
         );
 
         res.json({ success: true, product: result.rows[0] });
