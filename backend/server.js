@@ -10,6 +10,7 @@ const subscriptionRoutes = require('./routes/subscriptionRoutes');
 const invoiceRoutes = require('./routes/invoiceRoutes');
 const productRoutes = require('./routes/productRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const notificationsRoutes = require('./routes/notificationsRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -29,6 +30,8 @@ app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/invoices', invoiceRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/admin', adminRoutes);
+// Notifications
+app.use('/api/notifications', notificationsRoutes);
 
 // --- ERROR HANDLING ---
 app.use((err, req, res, next) => {
@@ -42,8 +45,23 @@ db.query('SELECT NOW()', (err, res) => {
     console.error("❌ Database Connection Failed:", err.stack);
   } else {
     console.log("✅ PostgreSQL Connected Successfully (Cloud/Local)");
-    app.listen(PORT, () => {
-      console.log(`🚀 Server running on http://localhost:${PORT}`);
+    // Ensure notifications table exists
+    const createNotifications = `
+      CREATE TABLE IF NOT EXISTS notifications (
+        id SERIAL PRIMARY KEY,
+        subscription_id INTEGER,
+        type VARCHAR(64),
+        message TEXT,
+        is_read BOOLEAN DEFAULT false,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `;
+
+    db.query(createNotifications, (createErr) => {
+      if (createErr) console.error('❌ Could not ensure notifications table:', createErr.stack || createErr);
+      app.listen(PORT, () => {
+        console.log(`🚀 Server running on http://localhost:${PORT}`);
+      });
     });
   }
 });

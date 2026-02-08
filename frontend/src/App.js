@@ -25,6 +25,7 @@ import SubscriptionList from './pages/admin/SubscriptionList.js';
 import SubscriptionDetail from './pages/admin/SubscriptionDetail.js';
 import InvoiceDraft from './pages/admin/InvoiceDraft.js';
 import Users from './pages/admin/Users.js';
+import Notifications from './pages/admin/Notifications.js';
 // --- NEW IMPORT HERE ---
 import SubscriptionForm from './components/SubscriptionForm.js'; 
 // -----------------------
@@ -97,6 +98,7 @@ export default function App() {
                 <Route path="discounts/new" element={<DiscountForm />} />
                 <Route path="discounts/:id" element={<DiscountForm />} />
                 <Route path="payments" element={<PaymentList />} />
+                <Route path="notifications" element={<Notifications />} />
               </Route>
 
               {/* Portal Routes */}
