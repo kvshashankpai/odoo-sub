@@ -23,7 +23,10 @@ export default function OrderDetail() {
       return {
         ...item,
         name: product?.name || item.name || 'Product',
+        description: product?.description || item.description || '',
         salePrice: product?.salePrice || item.price || 0,
+        basePrice: (typeof item.basePrice !== 'undefined') ? item.basePrice : product?.salePrice || item.price || 0,
+        additionalPrice: (typeof item.additionalPrice !== 'undefined') ? item.additionalPrice : 0,
       };
     });
 
@@ -40,6 +43,7 @@ export default function OrderDetail() {
       tax,
       total,
       taxRate: taxConfig?.[0]?.name || 'Standard Tax',
+      discount: lastOrder.discount || 0,
     };
   }, [lastOrder, products, taxConfig]);
 
@@ -50,7 +54,7 @@ export default function OrderDetail() {
     }
     const customer = { name: 'Portal User', email: 'user@example.com', company: '' };
     try {
-      await generateInvoicePDF(orderData.reference, customer, orderData.items, orderData.subtotal, orderData.tax, orderData.total);
+      await generateInvoicePDF(orderData.reference, customer, orderData.items, orderData.subtotal, orderData.tax, orderData.total, { preview: false, discount: orderData.discount, taxLabel: orderData.taxRate });
     } catch (err) {
       console.error('Failed to generate PDF', err);
     }
