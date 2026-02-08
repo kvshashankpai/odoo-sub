@@ -77,6 +77,21 @@ async function initializeDatabase() {
     `);
     console.log('✅ Payments table created');
 
+    // Create discounts table
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS discounts (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        type VARCHAR(50) NOT NULL,
+        value DECIMAL(12,2) NOT NULL,
+        min_purchase DECIMAL(12,2) DEFAULT 0,
+        start_date DATE,
+        end_date DATE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    console.log('✅ Discounts table created');
+
     console.log('✅ Database initialization completed successfully');
     process.exit(0);
   } catch (err) {
