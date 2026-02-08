@@ -1,0 +1,31 @@
+
+--- Columns in 'subscriptions' table ---
+- id (integer)
+- variant_id (integer)
+- product_id (integer)
+- parent_subscription_id (integer)
+- start_date (timestamp without time zone)
+- next_billing_date (timestamp without time zone)
+- total_amount (numeric)
+- created_at (timestamp without time zone)
+- customer_name (character varying)
+- status (character varying)
+- billing_cycle (character varying)
+
+--- Columns in 'products' table ---
+- created_at (timestamp without time zone)
+- price (numeric)
+- cost (numeric)
+- id (integer)
+- recurring (character varying)
+- name (character varying)
+- description (text)
+- type (character varying)
+
+--- Columns in 'product_variants' table ---
+- id (integer)
+- product_id (integer)
+- additional_price (numeric)
+- created_at (timestamp without time zone)
+- name (character varying)
+- description (text)

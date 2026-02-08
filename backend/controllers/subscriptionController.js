@@ -9,7 +9,7 @@ exports.getSubscriptions = async (req, res) => {
                 v.name as variant_name
             FROM subscriptions s
             LEFT JOIN products p ON s.product_id = p.id
-            LEFT JOIN variants v ON s.variant_id = v.id
+            LEFT JOIN product_variants v ON s.variant_id = v.id
             ORDER BY s.created_at DESC
         `;
         const result = await db.query(query);
