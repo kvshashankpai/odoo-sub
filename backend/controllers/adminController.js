@@ -28,3 +28,13 @@ exports.createInternalUser = async (req, res) => {
     res.status(500).json({ error: 'Server error creating internal user' });
   }
 };
+
+// Fetch all users text
+exports.getAllUsers = async (req, res) => {
+  try {
+    const result = await db.query('SELECT id, name, email, role, created_at FROM users ORDER BY created_at DESC');
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

@@ -33,23 +33,40 @@ export const DataProvider = ({ children }) => {
     return () => { mounted = false; };
   }, []);
 
-  // Subscriptions
-  const [subscriptions, setSubscriptions] = useState([
-    { id: 'S0001', customer: 'Mitchell Admin', planId: 1, status: 'Active', startDate: '2024-02-10', expiryDate: '2025-02-10', paymentTerms: 'Monthly', amount: 140 },
-    { id: 'S0002', customer: 'John Doe', planId: 2, status: 'Active', startDate: '2024-01-15', expiryDate: '2025-01-15', paymentTerms: 'Monthly', amount: 116 },
-    { id: 'S0003', customer: 'TechCorp Inc', planId: 3, status: 'Quotation', startDate: '2024-02-20', expiryDate: '2025-02-20', paymentTerms: 'Yearly', amount: 230 },
-  ]);
+  // Subscriptions - Fetch from API
+  const [subscriptions, setSubscriptions] = useState([]);
 
-  // Invoices
-  const [invoices, setInvoices] = useState([
-    { id: 'INV/2024/001', subscriptionId: 'S0001', amount: 140, tax: 21, total: 161, status: 'Paid', dueDate: '2024-02-20', issueDate: '2024-02-10' },
-    { id: 'INV/2024/002', subscriptionId: 'S0002', amount: 116, tax: 17.4, total: 133.4, status: 'Pending', dueDate: '2024-02-19', issueDate: '2024-02-09' },
-  ]);
+  // Invoices - Fetch from API
+  const [invoices, setInvoices] = useState([]);
 
-  // Payments
-  const [payments, setPayments] = useState([
-    { id: 'PAY/001', invoiceId: 'INV/2024/001', method: 'Card', amount: 161, date: '2024-02-15', status: 'Completed' },
-  ]);
+  // Payments - Intentionally empty as no API exists yet
+  const [payments, setPayments] = useState([]);
+
+  // Users - New state for dashboard metrics
+  const [usersCount, setUsersCount] = useState(0);
+
+  // Fetch all dashboard data
+  const refreshDashboardData = useCallback(async () => {
+    try {
+      const [subsRes, invRes, usersRes] = await Promise.all([
+        api.get('/subscriptions'),
+        api.get('/invoices'),
+        api.get('/admin/users') // New route added
+      ]);
+
+      if (subsRes.data) setSubscriptions(subsRes.data);
+      if (invRes.data) setInvoices(invRes.data);
+      if (usersRes.data) setUsersCount(usersRes.data.length);
+
+    } catch (err) {
+      console.error('Failed to refresh dashboard data', err);
+    }
+  }, []);
+
+  // Load initial dashboard data on mount
+  useEffect(() => {
+    refreshDashboardData();
+  }, [refreshDashboardData]);
 
   // Discounts
   const [discounts, setDiscounts] = useState([]);
@@ -136,7 +153,7 @@ export const DataProvider = ({ children }) => {
         notes: updated.description || '',
         recurring: updated.recurring || null,
       };
-  setProducts(prev => prev.map(p => (String(p.id) === String(id) ? mapped : p)));
+      setProducts(prev => prev.map(p => (String(p.id) === String(id) ? mapped : p)));
       return mapped;
     } catch (err) {
       console.error('Failed to update product', err?.response?.data || err.message);
@@ -147,7 +164,7 @@ export const DataProvider = ({ children }) => {
   const deleteProduct = useCallback(async (id) => {
     try {
       await api.delete(`/products/${id}`);
-  setProducts(prev => prev.filter(p => String(p.id) !== String(id)));
+      setProducts(prev => prev.filter(p => String(p.id) !== String(id)));
     } catch (err) {
       console.error('Failed to delete product', err?.response?.data || err.message);
       throw err;
@@ -155,30 +172,28 @@ export const DataProvider = ({ children }) => {
   }, []);
 
   // Subscription CRUD & Lifecycle
+  // Update subscriptions locally (Optimistic or helper)
   const addSubscription = useCallback((subscription) => {
-    const newSub = { 
-      ...subscription, 
-      id: `S${Math.floor(Math.random() * 9000) + 1000}`,
-      status: 'Draft'
-    };
-    setSubscriptions(prev => [...prev, newSub]);
-    return newSub;
+    // In real app, this should call API, but keeping helper signature
+    setSubscriptions(prev => [...prev, subscription]);
   }, []);
 
   const updateSubscription = useCallback((id, subscription) => {
     setSubscriptions(prev => prev.map(s => s.id === id ? { ...s, ...subscription } : s));
   }, []);
 
-  const deleteSubscription = useCallback((id) => {
-    setSubscriptions(prev => prev.filter(s => s.id !== id));
+  const deleteSubscription = useCallback(async (id) => {
+    try {
+      await api.delete(`/subscriptions/${id}`);
+      setSubscriptions(prev => prev.filter(s => s.id !== id));
+    } catch (err) {
+      console.error('Failed to delete subscription', err);
+    }
   }, []);
 
   const updateSubscriptionStatus = useCallback((id, status) => {
-    const validStatuses = ['Draft', 'Quotation', 'Confirmed', 'Active', 'Closed'];
-    if (validStatuses.includes(status)) {
-      updateSubscription(id, { status });
-    }
-  }, [updateSubscription]);
+    setSubscriptions(prev => prev.map(s => s.id === id ? { ...s, status } : s));
+  }, []);
 
   // Invoice generation & management
   const generateInvoice = useCallback((subscriptionId) => {
@@ -291,12 +306,21 @@ export const DataProvider = ({ children }) => {
     setTaxConfig(taxConfigs);
   }, []);
 
-  // Reporting metrics
+  // Reporting metrics (Dynamic)
   const getMetrics = useCallback(() => {
-    const activeCount = subscriptions.filter(s => s.status === 'Active').length;
-    const totalRevenue = subscriptions.reduce((sum, s) => sum + s.amount, 0);
-    const paidInvoices = invoices.filter(i => i.status === 'Paid').length;
-    const overdueInvoices = invoices.filter(i => i.status === 'Pending' && new Date(i.dueDate) < new Date()).length;
+    const activeCount = subscriptions.filter(s => s.status === 'Active' || s.status === 'confirmed').length;
+    // Calculate revenue from subscriptions total_amount (using fetched data structure)
+    // Assuming 'total_amount' is the field from backend
+    const totalRevenue = subscriptions.reduce((sum, s) => sum + (parseFloat(s.total_amount) || parseFloat(s.amount) || 0), 0);
+
+    // Invoices metrics
+    const paidInvoices = invoices.filter(i => i.status === 'Paid' || i.status === 'paid').length;
+    // Overdue check
+    const overdueInvoices = invoices.filter(i => {
+      if (i.status === 'Paid' || i.status === 'paid') return false;
+      const dueDate = i.due_date || i.dueDate;
+      return dueDate ? new Date(dueDate) < new Date() : false;
+    }).length;
 
     return {
       activeSubscriptions: activeCount,
@@ -304,8 +328,9 @@ export const DataProvider = ({ children }) => {
       paidInvoices,
       overdueInvoices,
       totalInvoices: invoices.length,
+      totalUsers: usersCount, // Added
     };
-  }, [subscriptions, invoices]);
+  }, [subscriptions, invoices, usersCount]);
 
   return (
     <DataContext.Provider value={{
@@ -322,7 +347,7 @@ export const DataProvider = ({ children }) => {
       // Tax
       taxConfig, updateTaxConfig,
       // Reporting
-      getMetrics,
+      getMetrics, refreshDashboardData,
     }}>
       {children}
     </DataContext.Provider>

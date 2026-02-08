@@ -19,8 +19,8 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // --- MIDDLEWARE ---
-app.use(cors()); 
-app.use(bodyParser.json()); 
+app.use(cors());
+app.use(bodyParser.json());
 
 // --- ROOT ROUTE ---
 app.get('/', (req, res) => {
@@ -51,7 +51,7 @@ db.query('SELECT NOW()', (err, res) => {
     console.error("❌ Database Connection Failed:", err.stack);
   } else {
     console.log("✅ PostgreSQL Connected Successfully (Cloud/Local)");
-    
+
     // Ensure subscriptions table has variant_id column
     const addVariantColumn = `
       ALTER TABLE subscriptions 
@@ -113,10 +113,10 @@ db.query('SELECT NOW()', (err, res) => {
 
           db.query(createVariants, (createErr2) => {
             if (createErr2) console.error('❌ Could not ensure product_variants table:', createErr2.stack || createErr2);
-            
+
             db.query(createRecurringPrices, (createErr3) => {
               if (createErr3) console.error('❌ Could not ensure recurring_prices table:', createErr3.stack || createErr3);
-              
+
               app.listen(PORT, async () => {
                 console.log(`🚀 Server running on http://localhost:${PORT}`);
 
@@ -141,8 +141,16 @@ db.query('SELECT NOW()', (err, res) => {
                     // option: run once on startup if requested
                     if (process.env.NOTIFICATION_CRON_RUN_ON_START === 'true') {
                       try {
-                        const generated = await notificationsController.generateNotificationsInternal();
-                        if (generated > 0) console.log(`🔔 Generated ${generated} scheduled notification(s) on startup`);
+                        console.log('🔔 Attempting to generate notifications on startup...');
+                        // Use a short delay to ensure DB/Models are fully ready if needed
+                        setTimeout(async () => {
+                          try {
+                            const generated = await notificationsController.generateNotificationsInternal();
+                            if (generated > 0) console.log(`🔔 Generated ${generated} scheduled notification(s) on startup`);
+                          } catch (innerErr) {
+                            console.error('❌ Startup generateNotifications failed (inner):', innerErr.message);
+                          }
+                        }, 5000);
                       } catch (err) {
                         console.error('❌ Startup generateNotifications failed:', err.stack || err.message);
                       }
