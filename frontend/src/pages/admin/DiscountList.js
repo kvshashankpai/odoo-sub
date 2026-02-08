@@ -61,9 +61,13 @@ export default function DiscountList() {
                     Edit
                   </button>
                   <button 
-                    onClick={() => {
-                      if (window.confirm('Delete this discount?')) {
-                        deleteDiscount(d.id);
+                    onClick={async () => {
+                      if (!window.confirm('Delete this discount?')) return;
+                      try {
+                        await deleteDiscount(d.id);
+                        alert('Discount deleted');
+                      } catch (err) {
+                        alert(err?.response?.data?.error || err.message || 'Failed to delete');
                       }
                     }}
                     className="text-red-600 hover:underline text-sm font-medium"

@@ -5,7 +5,7 @@ import { useCart } from '../../context/CartContext';
 
 export default function Cart() {
   const navigate = useNavigate();
-  const { items, removeFromCart, updateQty, subtotal, placeOrder } = useCart();
+  const { items, removeFromCart, updateQty, subtotal, discountAmount, placeOrder } = useCart();
 
   return (
     <div className="py-8">
@@ -59,14 +59,20 @@ export default function Cart() {
                 <span>Subtotal</span>
                 <span>${subtotal.toFixed(2)}</span>
               </div>
+              {discountAmount > 0 && (
+                <div className="flex justify-between text-green-700">
+                  <span>Discount</span>
+                  <span>- ${discountAmount.toFixed(2)}</span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span>Taxes (15%)</span>
-                <span>${(subtotal * 0.15).toFixed(2)}</span>
+                <span>${(Math.max(subtotal - discountAmount, 0) * 0.15).toFixed(2)}</span>
               </div>
             </div>
             <div className="flex justify-between font-bold text-xl mb-6">
               <span>Total</span>
-              <span>${(subtotal * 1.15).toFixed(2)}</span>
+              <span>${(Math.max(subtotal - discountAmount, 0) * 1.15).toFixed(2)}</span>
             </div>
             <button 
               onClick={() => {

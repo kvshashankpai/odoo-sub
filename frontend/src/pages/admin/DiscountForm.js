@@ -8,9 +8,9 @@ export default function DiscountForm() {
   const { id } = useParams();
   const { discounts, addDiscount, updateDiscount } = useData();
   
-  const discount = discounts.find(d => d.id === id);
+  const discount = discounts.find(d => String(d.id) === String(id));
   const isNew = !discount;
-  
+
   const [formData, setFormData] = useState({
     name: '',
     type: 'Percentage',
@@ -18,8 +18,21 @@ export default function DiscountForm() {
     minPurchase: '',
     startDate: new Date().toISOString().split('T')[0],
     endDate: '',
-    ...discount
   });
+
+  // When editing an existing discount, populate the form fields
+  useEffect(() => {
+    if (discount) {
+      setFormData({
+        name: discount.name || '',
+        type: discount.type || 'Percentage',
+        value: discount.value !== undefined ? String(discount.value) : '',
+        minPurchase: discount.minPurchase !== undefined ? String(discount.minPurchase) : '',
+        startDate: discount.startDate || new Date().toISOString().split('T')[0],
+        endDate: discount.endDate || '',
+      });
+    }
+  }, [discount]);
 
   const [message, setMessage] = useState('');
 
@@ -33,23 +46,34 @@ export default function DiscountForm() {
       setMessage('Please fill all required fields');
       return;
     }
-
-    if (isNew) {
-      const newDiscount = addDiscount({
-        name: formData.name,
-        type: formData.type,
-        value: parseFloat(formData.value),
-        minPurchase: formData.minPurchase ? parseFloat(formData.minPurchase) : 0,
-        startDate: formData.startDate,
-        endDate: formData.endDate,
-      });
-      setMessage('Discount created successfully!');
-      setTimeout(() => navigate('/app/discounts'), 1500);
-    } else {
-      updateDiscount(id, formData);
-      setMessage('Discount updated successfully!');
-      setTimeout(() => navigate('/app/discounts'), 1500);
-    }
+    (async () => {
+      try {
+        if (isNew) {
+          await addDiscount({
+            name: formData.name,
+            type: formData.type,
+            value: parseFloat(formData.value),
+            minPurchase: formData.minPurchase ? parseFloat(formData.minPurchase) : 0,
+            startDate: formData.startDate,
+            endDate: formData.endDate,
+          });
+          setMessage('Discount created successfully!');
+        } else {
+          await updateDiscount(id, {
+            name: formData.name,
+            type: formData.type,
+            value: parseFloat(formData.value),
+            minPurchase: formData.minPurchase ? parseFloat(formData.minPurchase) : 0,
+            startDate: formData.startDate,
+            endDate: formData.endDate,
+          });
+          setMessage('Discount updated successfully!');
+        }
+        setTimeout(() => navigate('/app/discounts'), 1200);
+      } catch (err) {
+        setMessage(err?.response?.data?.error || err.message || 'Failed to save discount');
+      }
+    })();
   };
 
   return (

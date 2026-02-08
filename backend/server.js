@@ -9,6 +9,7 @@ const authRoutes = require('./routes/authRoutes');
 const subscriptionRoutes = require('./routes/subscriptionRoutes');
 const invoiceRoutes = require('./routes/invoiceRoutes');
 const productRoutes = require('./routes/productRoutes');
+const discountRoutes = require('./routes/discountRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const notificationsRoutes = require('./routes/notificationsRoutes');
 
@@ -29,6 +30,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/invoices', invoiceRoutes);
 app.use('/api/products', productRoutes);
+app.use('/api/discounts', discountRoutes);
 app.use('/api/admin', adminRoutes);
 // Notifications
 app.use('/api/notifications', notificationsRoutes);

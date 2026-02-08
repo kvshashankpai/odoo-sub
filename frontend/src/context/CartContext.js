@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { useData } from './DataContext';
 
 const CartContext = createContext();
 
@@ -42,15 +43,46 @@ export const CartProvider = ({ children }) => {
 
   const subtotal = items.reduce((s, it) => s + ((it.salePrice || it.price) * (it.qty || 1)), 0);
 
+  // Compute applicable discount based on current discounts from DataContext
+  const { discounts } = useData();
+
+  const computeDiscountAmount = (subtotalAmount) => {
+    if (!discounts || discounts.length === 0) return 0;
+    const now = new Date();
+    // Find all discounts that are active and satisfy minPurchase
+    const applicable = discounts.filter(d => {
+      const start = d.startDate ? new Date(d.startDate) : null;
+      const end = d.endDate ? new Date(d.endDate) : null;
+      if (start && now < start) return false;
+      if (end && now > end) return false;
+      if (d.minPurchase && subtotalAmount < d.minPurchase) return false;
+      return true;
+    });
+    if (applicable.length === 0) return 0;
+    // Choose the best (max savings)
+    const amounts = applicable.map(d => {
+      if ((d.type || '').toLowerCase().includes('percent')) {
+        return Math.round((subtotalAmount * (d.value / 100)) * 100) / 100;
+      }
+      return parseFloat(d.value || 0);
+    });
+    return Math.max(...amounts, 0);
+  };
+
+  const discountAmount = computeDiscountAmount(subtotal);
+
   const placeOrder = () => {
     const orderRef = `S${Math.floor(Math.random() * 9000) + 1000}`;
+    const taxes = +(Math.max(subtotal - discountAmount, 0) * 0.15).toFixed(2);
+    const total = +(Math.max(subtotal - discountAmount, 0) + taxes).toFixed(2);
     const order = {
       reference: orderRef,
       date: new Date().toISOString(),
       items,
       subtotal,
-      taxes: +(subtotal * 0.15).toFixed(2),
-      total: +(subtotal * 1.15).toFixed(2),
+      discount: discountAmount,
+      taxes,
+      total,
     };
     setLastOrder(order);
     clearCart();
@@ -58,7 +90,7 @@ export const CartProvider = ({ children }) => {
   };
 
   return (
-    <CartContext.Provider value={{ items, addToCart, removeFromCart, updateQty, clearCart, subtotal, placeOrder, lastOrder }}>
+    <CartContext.Provider value={{ items, addToCart, removeFromCart, updateQty, clearCart, subtotal, discountAmount, placeOrder, lastOrder }}>
       {children}
     </CartContext.Provider>
   );

@@ -52,10 +52,32 @@ export const DataProvider = ({ children }) => {
   ]);
 
   // Discounts
-  const [discounts, setDiscounts] = useState([
-    { id: 1, name: 'Early Bird', type: 'percentage', value: 10, minPurchase: 50, startDate: '2024-01-01', endDate: '2024-12-31' },
-    { id: 2, name: 'Bulk', type: 'fixed', value: 25, minQuantity: 5, startDate: '2024-01-01', endDate: '2024-12-31' },
-  ]);
+  const [discounts, setDiscounts] = useState([]);
+
+  // Load discounts from backend on mount
+  useEffect(() => {
+    let mounted = true;
+    const fetchDiscounts = async () => {
+      try {
+        const res = await api.get('/discounts');
+        const rows = res.data || [];
+        const mapped = rows.map(d => ({
+          id: d.id,
+          name: d.name,
+          type: d.type === 'Percentage' || d.type === 'percentage' || d.type === 'Percentage' ? 'Percentage' : (d.type || 'Fixed Amount'),
+          value: parseFloat(d.value || 0),
+          minPurchase: parseFloat(d.min_purchase || 0),
+          startDate: d.start_date || null,
+          endDate: d.end_date || null,
+        }));
+        if (mounted) setDiscounts(mapped);
+      } catch (err) {
+        console.error('Failed to fetch discounts', err?.response?.data || err.message);
+      }
+    };
+    fetchDiscounts();
+    return () => { mounted = false; };
+  }, []);
 
   // Tax Config
   const [taxConfig, setTaxConfig] = useState([
@@ -196,18 +218,72 @@ export const DataProvider = ({ children }) => {
   }, [updateInvoiceStatus]);
 
   // Discount management
-  const addDiscount = useCallback((discount) => {
-    const newDiscount = { ...discount, id: Math.max(...discounts.map(d => d.id), 0) + 1 };
-    setDiscounts(prev => [...prev, newDiscount]);
-    return newDiscount;
-  }, [discounts]);
-
-  const updateDiscount = useCallback((id, discount) => {
-    setDiscounts(prev => prev.map(d => d.id === id ? { ...d, ...discount } : d));
+  const addDiscount = useCallback(async (discount) => {
+    try {
+      const payload = {
+        name: discount.name,
+        type: discount.type,
+        value: discount.value,
+        minPurchase: discount.minPurchase || 0,
+        startDate: discount.startDate || null,
+        endDate: discount.endDate || null,
+      };
+      const res = await api.post('/discounts', payload);
+      const created = res.data.discount || res.data;
+      const mapped = {
+        id: created.id,
+        name: created.name,
+        type: created.type === 'Percentage' || created.type === 'percentage' ? 'Percentage' : (created.type || 'Fixed Amount'),
+        value: parseFloat(created.value || 0),
+        minPurchase: parseFloat(created.min_purchase || 0),
+        startDate: created.start_date || null,
+        endDate: created.end_date || null,
+      };
+      setDiscounts(prev => [...prev, mapped]);
+      return mapped;
+    } catch (err) {
+      console.error('Failed to create discount', err?.response?.data || err.message);
+      throw err;
+    }
   }, []);
 
-  const deleteDiscount = useCallback((id) => {
-    setDiscounts(prev => prev.filter(d => d.id !== id));
+  const updateDiscount = useCallback(async (id, discount) => {
+    try {
+      const payload = {
+        name: discount.name,
+        type: discount.type,
+        value: discount.value,
+        minPurchase: discount.minPurchase || 0,
+        startDate: discount.startDate || null,
+        endDate: discount.endDate || null,
+      };
+      const res = await api.put(`/discounts/${id}`, payload);
+      const updated = res.data.discount || res.data;
+      const mapped = {
+        id: updated.id,
+        name: updated.name,
+        type: updated.type === 'Percentage' || updated.type === 'percentage' ? 'Percentage' : (updated.type || 'Fixed Amount'),
+        value: parseFloat(updated.value || 0),
+        minPurchase: parseFloat(updated.min_purchase || 0),
+        startDate: updated.start_date || null,
+        endDate: updated.end_date || null,
+      };
+      setDiscounts(prev => prev.map(d => (String(d.id) === String(id) ? mapped : d)));
+      return mapped;
+    } catch (err) {
+      console.error('Failed to update discount', err?.response?.data || err.message);
+      throw err;
+    }
+  }, []);
+
+  const deleteDiscount = useCallback(async (id) => {
+    try {
+      await api.delete(`/discounts/${id}`);
+      setDiscounts(prev => prev.filter(d => String(d.id) !== String(id)));
+    } catch (err) {
+      console.error('Failed to delete discount', err?.response?.data || err.message);
+      throw err;
+    }
   }, []);
 
   // Tax configuration
